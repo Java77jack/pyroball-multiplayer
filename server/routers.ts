@@ -1,18 +1,10 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
-import { 
-  getPlayerProfile, 
-  getPlayerAchievements, 
-  getLeaderboard, 
-  updatePlayerRating, 
-  updatePlayerStats, 
-  unlockAchievement 
-} from "./profileDb";
-import { z } from "zod";
+import { publicProcedure, router } from "./_core/trpc";
 
 export const appRouter = router({
+    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -25,47 +17,12 @@ export const appRouter = router({
     }),
   }),
 
-  profile: router({
-    getProfile: publicProcedure
-      .input(z.object({ userId: z.number() }))
-      .query(async ({ input }) => {
-        return await getPlayerProfile(input.userId);
-      }),
-    getMyProfile: protectedProcedure.query(async ({ ctx }) => {
-      return await getPlayerProfile(ctx.user.id);
-    }),
-    getAchievements: publicProcedure
-      .input(z.object({ userId: z.number() }))
-      .query(async ({ input }) => {
-        return await getPlayerAchievements(input.userId);
-      }),
-    getLeaderboard: publicProcedure
-      .input(z.object({ limit: z.number().default(100), offset: z.number().default(0) }))
-      .query(async ({ input }) => {
-        return await getLeaderboard(input.limit, input.offset);
-      }),
-    updateRating: protectedProcedure
-      .input(z.object({ ratingChange: z.number() }))
-      .mutation(async ({ input, ctx }) => {
-        return await updatePlayerRating(ctx.user.id, input.ratingChange);
-      }),
-    updateStats: protectedProcedure
-      .input(z.object({
-        goals: z.number(),
-        assists: z.number(),
-        steals: z.number(),
-        blocks: z.number(),
-        won: z.boolean(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        return await updatePlayerStats(ctx.user.id, input);
-      }),
-    unlockAchievement: protectedProcedure
-      .input(z.object({ achievementSlug: z.string() }))
-      .mutation(async ({ input, ctx }) => {
-        return await unlockAchievement(ctx.user.id, input.achievementSlug);
-      }),
-  }),
+  // TODO: add feature routers here, e.g.
+  // todo: router({
+  //   list: protectedProcedure.query(({ ctx }) =>
+  //     db.getUserTodos(ctx.user.id)
+  //   ),
+  // }),
 });
 
 export type AppRouter = typeof appRouter;

@@ -15,20 +15,6 @@
       "when": 1775181070635,
       "tag": "0001_nappy_moonstone",
       "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1775439921330,
-      "tag": "0002_windy_thanos",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "5",
-      "when": 1775450696084,
-      "tag": "0003_purple_wither",
-      "breakpoints": true
     }
   ]
 }
