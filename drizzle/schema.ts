@@ -140,3 +140,140 @@ export const userStats = mysqlTable("user_stats", {
 
 export type UserStats = typeof userStats.$inferSelect;
 export type InsertUserStats = typeof userStats.$inferInsert;
+
+/**
+ * Achievement definitions
+ */
+export const achievements = mysqlTable("achievements", {
+  id: int("id").autoincrement().primaryKey(),
+  slug: varchar("slug", { length: 64 }).notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  icon: varchar("icon", { length: 255 }), // emoji or icon name
+  rarity: mysqlEnum("rarity", ["common", "uncommon", "rare", "epic", "legendary"]).default("common").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Achievement = typeof achievements.$inferSelect;
+export type InsertAchievement = typeof achievements.$inferInsert;
+
+/**
+ * Player achievements (join table with unlock date)
+ */
+export const playerAchievements = mysqlTable("player_achievements", {
+  id: int("id").autoincrement().primaryKey(),
+  playerId: int("playerId").notNull().references(() => users.id),
+  achievementId: int("achievementId").notNull().references(() => achievements.id),
+  unlockedAt: timestamp("unlockedAt").defaultNow().notNull(),
+});
+
+export type PlayerAchievement = typeof playerAchievements.$inferSelect;
+export type InsertPlayerAchievement = typeof playerAchievements.$inferInsert;
+
+/**
+ * Player profile information
+ */
+export const playerProfiles = mysqlTable("player_profiles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique().references(() => users.id),
+  displayName: varchar("displayName", { length: 64 }),
+  bio: text("bio"),
+  favoriteTeam: varchar("favoriteTeam", { length: 64 }),
+  rating: int("rating").default(1000).notNull(), // ELO-style rating
+  level: int("level").default(1).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PlayerProfile = typeof playerProfiles.$inferSelect;
+export type InsertPlayerProfile = typeof playerProfiles.$inferInsert;
+/**
+ * Season management
+ */
+export const seasons = mysqlTable("seasons", {
+  id: int("id").autoincrement().primaryKey(),
+  seasonNumber: int("seasonNumber").notNull().unique(),
+  status: mysqlEnum("status", ["upcoming", "active", "playoffs", "finished"]).default("upcoming").notNull(),
+  startDate: timestamp("startDate").notNull(),
+  endDate: timestamp("endDate"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Season = typeof seasons.$inferSelect;
+export type InsertSeason = typeof seasons.$inferInsert;
+
+/**
+ * Team standings for each season
+ */
+export const standings = mysqlTable("standings", {
+  id: int("id").autoincrement().primaryKey(),
+  seasonId: int("seasonId").notNull().references(() => seasons.id),
+  teamId: varchar("teamId", { length: 64 }).notNull(), // Team ID from teams.ts
+  wins: int("wins").default(0).notNull(),
+  losses: int("losses").default(0).notNull(),
+  pointsFor: int("pointsFor").default(0).notNull(), // Total goals scored
+  pointsAgainst: int("pointsAgainst").default(0).notNull(), // Total goals allowed
+  rank: int("rank").notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Standing = typeof standings.$inferSelect;
+export type InsertStanding = typeof standings.$inferInsert;
+
+/**
+ * Season schedule (round-robin matches)
+ */
+export const seasonMatches = mysqlTable("season_matches", {
+  id: int("id").autoincrement().primaryKey(),
+  seasonId: int("seasonId").notNull().references(() => seasons.id),
+  week: int("week").notNull(), // Week number in season
+  homeTeamId: varchar("homeTeamId", { length: 64 }).notNull(),
+  awayTeamId: varchar("awayTeamId", { length: 64 }).notNull(),
+  homeScore: int("homeScore"),
+  awayScore: int("awayScore"),
+  status: mysqlEnum("status", ["scheduled", "playing", "finished"]).default("scheduled").notNull(),
+  matchDate: timestamp("matchDate"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SeasonMatch = typeof seasonMatches.$inferSelect;
+export type InsertSeasonMatch = typeof seasonMatches.$inferInsert;
+
+/**
+ * Playoff bracket
+ */
+export const playoffs = mysqlTable("playoffs", {
+  id: int("id").autoincrement().primaryKey(),
+  seasonId: int("seasonId").notNull().references(() => seasons.id),
+  round: int("round").notNull(), // 1 = semifinals, 2 = finals
+  matchNumber: int("matchNumber").notNull(),
+  homeTeamId: varchar("homeTeamId", { length: 64 }).notNull(),
+  awayTeamId: varchar("awayTeamId", { length: 64 }).notNull(),
+  homeScore: int("homeScore"),
+  awayScore: int("awayScore"),
+  winnerId: varchar("winnerId", { length: 64 }), // Team ID of winner
+  status: mysqlEnum("status", ["scheduled", "playing", "finished"]).default("scheduled").notNull(),
+  matchDate: timestamp("matchDate"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Playoff = typeof playoffs.$inferSelect;
+export type InsertPlayoff = typeof playoffs.$inferInsert;
+
+/**
+ * Pyro Cup championship game
+ */
+export const pyroCup = mysqlTable("pyro_cup", {
+  id: int("id").autoincrement().primaryKey(),
+  seasonId: int("seasonId").notNull().references(() => seasons.id),
+  team1Id: varchar("team1Id", { length: 64 }).notNull(),
+  team2Id: varchar("team2Id", { length: 64 }).notNull(),
+  team1Score: int("team1Score"),
+  team2Score: int("team2Score"),
+  winnerId: varchar("winnerId", { length: 64 }), // Team ID of champion
+  status: mysqlEnum("status", ["scheduled", "playing", "finished"]).default("scheduled").notNull(),
+  matchDate: timestamp("matchDate"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type PyroCup = typeof pyroCup.$inferSelect;
+export type InsertPyroCup = typeof pyroCup.$inferInsert;
