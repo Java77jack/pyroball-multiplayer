@@ -1,11 +1,10 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
-import { createRoom, getRoomByCode, getAvailableRooms } from "./db";
-import { z } from "zod";
+import { publicProcedure, router } from "./_core/trpc";
 
 export const appRouter = router({
+    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -18,33 +17,12 @@ export const appRouter = router({
     }),
   }),
 
-  rooms: router({
-    list: publicProcedure.query(async () => {
-      return await getAvailableRooms();
-    }),
-    create: protectedProcedure
-      .input(z.object({
-        difficulty: z.enum(["rookie", "pro", "allstar"]),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-        await createRoom(roomCode, ctx.user.id, input.difficulty);
-        return { roomCode };
-      }),
-    get: publicProcedure
-      .input(z.object({ roomCode: z.string() }))
-      .query(async ({ input }) => {
-        return await getRoomByCode(input.roomCode);
-      }),
-    join: protectedProcedure
-      .input(z.object({ roomCode: z.string() }))
-      .mutation(async ({ input, ctx }) => {
-        const room = await getRoomByCode(input.roomCode);
-        if (!room) throw new Error("Room not found");
-        if (room.status !== "waiting") throw new Error("Room is not available");
-        return { success: true, room };
-      }),
-  }),
+  // TODO: add feature routers here, e.g.
+  // todo: router({
+  //   list: protectedProcedure.query(({ ctx }) =>
+  //     db.getUserTodos(ctx.user.id)
+  //   ),
+  // }),
 });
 
 export type AppRouter = typeof appRouter;

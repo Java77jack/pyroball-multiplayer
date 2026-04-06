@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, gameRooms } from "../drizzle/schema";
+import { InsertUser, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -87,42 +87,6 @@ export async function getUserByOpenId(openId: string) {
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
 
   return result.length > 0 ? result[0] : undefined;
-}
-
-// Room Management Queries
-export async function createRoom(roomCode: string, hostId: number, difficulty: "rookie" | "pro" | "allstar") {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  return await db.insert(gameRooms).values({
-    roomCode,
-    hostId,
-    difficulty,
-    status: "waiting",
-  });
-}
-
-export async function getRoomByCode(roomCode: string) {
-  const db = await getDb();
-  if (!db) return undefined;
-
-  const result = await db.select().from(gameRooms).where(eq(gameRooms.roomCode, roomCode)).limit(1);
-  
-  return result.length > 0 ? result[0] : undefined;
-}
-
-export async function getAvailableRooms() {
-  const db = await getDb();
-  if (!db) return [];
-
-  return await db.select().from(gameRooms).where(eq(gameRooms.status, "waiting")).limit(50);
-}
-
-export async function updateRoomStatus(roomId: number, status: "waiting" | "playing" | "finished") {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  return await db.update(gameRooms).set({ status }).where(eq(gameRooms.id, roomId));
 }
 
 // TODO: add feature queries here as your schema grows.
