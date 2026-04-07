@@ -70,3 +70,33 @@
 - [ ] Verify WebSocket connections work
 - [ ] Test matchmaking with multiple players
 - [ ] Monitor for errors and performance issues
+
+
+## Visual & Mechanics Improvements
+
+### Arena Rendering
+- [ ] Upload professional Pyroball arena image to S3
+- [ ] Replace simple court render with arena image background
+- [ ] Adjust camera perspective to match arena image
+- [ ] Ensure players render correctly over arena background
+
+### Player Movement
+- [ ] Enhance player running animation with arm swinging
+- [ ] Add idle stance with realistic posture
+- [ ] Implement acceleration/deceleration physics
+- [ ] Add directional facing based on movement
+- [ ] Smooth transitions between animation states
+
+### Hand-Based Ball Interactions
+- [ ] Modify shooting mechanics to show hand/arm extension
+- [ ] Add passing animation with arm motion
+- [ ] Show ball in player's hand during possession
+- [ ] Add ball trajectory visualization
+- [ ] Improve visual feedback for shot power
+
+### Testing & Polish
+- [ ] Test player animations in all movement directions
+- [ ] Verify ball interactions look natural
+- [ ] Check arena image integration
+- [ ] Test on multiple screen sizes
+- [ ] Verify gamepad controls still work

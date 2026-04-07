@@ -221,7 +221,8 @@ function executePass(s: GameState, passer: PlayerState, target: PlayerState) {
 
   s.ball.vel = { x: dir.x * passSpeed + spread, y: dir.y * passSpeed + spread };
   s.ball.carrier = null;
-  s.ball.pos = { x: passer.pos.x + dir.x * 8, y: passer.pos.y + dir.y * 8 };
+  // Ball released from hand (higher up) with forward offset
+  s.ball.pos = { x: passer.pos.x + dir.x * 12, y: passer.pos.y + dir.y * 12 - 8 };
   s.ball.lastPasser = passer.id;
   s.ball.passIntended = target.id;
   passer.hasBall = false;
@@ -289,7 +290,8 @@ function executeShot(s: GameState, shooter: PlayerState, targetGoal: Vec2) {
     y: Math.sin(shotAngle) * shootPower,
   };
   s.ball.carrier = null;
-  s.ball.pos = { x: shooter.pos.x + dir.x * 8, y: shooter.pos.y + dir.y * 8 };
+  // Ball released from hand (higher up) with forward offset
+  s.ball.pos = { x: shooter.pos.x + dir.x * 12, y: shooter.pos.y + dir.y * 12 - 10 };
   s.ball.lastPasser = null;
   s.ball.passIntended = null;
   s.ball.lastShooter = shooter.id;
@@ -352,7 +354,8 @@ function executeMeterShot(s: GameState, shooter: PlayerState, targetGoal: Vec2, 
     y: Math.sin(meterShotAngle) * shootPower,
   };
   s.ball.carrier = null;
-  s.ball.pos = { x: shooter.pos.x + dir.x * 8, y: shooter.pos.y + dir.y * 8 };
+  // Ball released from hand (higher up) with forward offset
+  s.ball.pos = { x: shooter.pos.x + dir.x * 12, y: shooter.pos.y + dir.y * 12 - 10 };
   s.ball.lastPasser = null;
   s.ball.passIntended = null;
   s.ball.lastShooter = shooter.id;
@@ -380,7 +383,8 @@ function executePowerShot(s: GameState, shooter: PlayerState, targetGoal: Vec2) 
     y: dir.y * shootPower,
   };
   s.ball.carrier = null;
-  s.ball.pos = { x: shooter.pos.x + dir.x * 8, y: shooter.pos.y + dir.y * 8 };
+  // Ball released from hand (higher up) with forward offset
+  s.ball.pos = { x: shooter.pos.x + dir.x * 12, y: shooter.pos.y + dir.y * 12 - 10 };
   s.ball.lastPasser = null;
   s.ball.passIntended = null;
   s.ball.lastShooter = shooter.id;
@@ -849,11 +853,17 @@ export function useGameEngine(homeTeam: string, awayTeam: string, difficulty: Di
     if (controlled) {
       const joy = joystickRef.current;
       const mag = Math.sqrt(joy.x * joy.x + joy.y * joy.y);
+      const acceleration = 0.15;
+      const deceleration = 0.12;
+      
       if (mag > 0.1) {
-        const speed = PLAYER.SPEED * getSpeedMod(controlled);
-        controlled.vel = { x: joy.x * speed, y: joy.y * speed };
+        const targetSpeed = PLAYER.SPEED * getSpeedMod(controlled);
+        const targetVel = { x: joy.x * targetSpeed, y: joy.y * targetSpeed };
+        controlled.vel.x += (targetVel.x - controlled.vel.x) * acceleration;
+        controlled.vel.y += (targetVel.y - controlled.vel.y) * acceleration;
       } else {
-        controlled.vel = { x: controlled.vel.x * 0.7, y: controlled.vel.y * 0.7 };
+        controlled.vel.x *= (1 - deceleration);
+        controlled.vel.y *= (1 - deceleration);
       }
     }
 

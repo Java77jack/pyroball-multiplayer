@@ -33,11 +33,11 @@ const CANVAS_H = 540;
 
 const FIELD = {
   // Far edge (gy=0, top/left of image — further from camera)
-  farLeft:   { x: 148, y: 192 },   // gx=0, gy=0   (top-left corner of court)
-  farRight:  { x: 775, y: 138 },   // gx=900, gy=0 (top-right corner — HIGHER)
+  farLeft:   { x: 160, y: 280 },   // gx=0, gy=0   (top-left corner of court)
+  farRight:  { x: 800, y: 260 },   // gx=900, gy=0 (top-right corner)
   // Near edge (gy=500, bottom/right of image — closer to camera)
-  nearLeft:  { x: 82,  y: 428 },   // gx=0, gy=500 (bottom-left corner)
-  nearRight: { x: 862, y: 348 },   // gx=900, gy=500 (bottom-right — HIGHER than nearLeft)
+  nearLeft:  { x: 110, y: 480 },   // gx=0, gy=500 (bottom-left corner)
+  nearRight: { x: 850, y: 460 },   // gx=900, gy=500 (bottom-right)
 };
 
 // --- Build field clipping path (quadrilateral) ---
