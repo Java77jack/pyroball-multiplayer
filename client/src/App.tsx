@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
@@ -5,34 +6,63 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import GameScreen from "./pages/GameScreen";
+import TeamSelect from "./pages/TeamSelect";
+import HowToPlay from "./pages/HowToPlay";
+import MatchResults from "./pages/MatchResults";
+import VSScreen from "./pages/VSScreen";
+import Practice from "./pages/Practice";
+import PracticeGame from "./pages/PracticeGame";
+import { GameProvider } from "./contexts/GameContext";
+import { markUserInteraction, preloadMusic } from "./lib/musicEngine";
+import { initAudio } from "./lib/soundEngine";
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       <Route path={"/"} component={Home} />
+      <Route path={"/team-select"} component={TeamSelect} />
+      <Route path={"/vs"} component={VSScreen} />
+      <Route path={"/game"} component={GameScreen} />
+      <Route path={"/how-to-play"} component={HowToPlay} />
+      <Route path={"/results"} component={MatchResults} />
+      <Route path={"/practice"} component={Practice} />
+      <Route path={"/practice-game"} component={PracticeGame} />
       <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
-
 function App() {
+  // Global interaction listener to unlock audio autoplay policy
+  useEffect(() => {
+    preloadMusic();
+
+    const handleInteraction = () => {
+      initAudio();
+      markUserInteraction();
+    };
+
+    window.addEventListener('click', handleInteraction, { once: false });
+    window.addEventListener('touchstart', handleInteraction, { once: false });
+    window.addEventListener('keydown', handleInteraction, { once: false });
+
+    return () => {
+      window.removeEventListener('click', handleInteraction);
+      window.removeEventListener('touchstart', handleInteraction);
+      window.removeEventListener('keydown', handleInteraction);
+    };
+  }, []);
+
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
-          <Toaster />
-          <Router />
+          <GameProvider>
+            <Toaster />
+            <Router />
+          </GameProvider>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
