@@ -101,3 +101,13 @@
 - [x] Check arena image integration
 - [ ] Test on multiple screen sizes
 - [x] Verify gamepad controls still work
+
+
+## Field Orientation & Player Display Fixes
+
+- [x] Generate new arena with side-to-side field orientation (goals on left and right)
+- [x] Update game rendering to show all active players (3v3) on field
+- [x] Remove white outline from player nameplates
+- [x] Adjust field perspective coordinates for side-to-side layout
+- [x] Update player movement directions to match new field orientation
+- [x] Test field orientation and player display

@@ -203,6 +203,8 @@ function drawGoals(ctx: CanvasRenderingContext2D, gs: GameState, frame: number) 
 // DRAW PLAYER — Sprite-based rendering with 5 poses per team
 // ============================================================
 function drawPlayer(ctx: CanvasRenderingContext2D, p: PlayerState, team: TeamData, frame: number, gs: GameState) {
+  // Draw all players (no idle players filtered out in arena render)
+  
   const { x: gx, y: gy } = p.pos;
   const proj = project(gx, gy);
   const { x: sx, y: sy, scale: rawS } = proj;
@@ -468,11 +470,7 @@ function drawPlayer(ctx: CanvasRenderingContext2D, p: PlayerState, team: TeamDat
     ? `rgba(${hexToRgb(team.glow)}, 0.75)`
     : 'rgba(0, 0, 0, 0.55)';
   ctx.fill();
-  ctx.strokeStyle = p.isControlled
-    ? team.glow
-    : `rgba(${hexToRgb(team.secondary)}, 0.35)`;
-  ctx.lineWidth = 0.5;
-  ctx.stroke();
+  // Removed stroke border to eliminate white outline
 
   ctx.fillStyle = p.isControlled ? '#FFFFFF' : 'rgba(255,255,255,0.85)';
   ctx.fillText(labelText, sx, labelY);
