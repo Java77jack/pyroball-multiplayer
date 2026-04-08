@@ -70,3 +70,31 @@
 - [ ] Verify WebSocket connections work
 - [ ] Test matchmaking with multiple players
 - [ ] Monitor for errors and performance issues
+
+
+## Player Quality & Experience Enhancements
+
+### Player Grounding & Physics
+- [x] Fix player floating on screen - improved ground shadow and anchoring
+- [x] Adjust perspective projection to properly ground players on court
+- [x] Improve shadow rendering for better depth perception
+- [ ] Add proper collision detection with court boundaries
+
+### Shooting Direction & AI
+- [x] Fix player shooting directions - now shooting at goal center
+- [x] Improve AI targeting logic to aim at goal center
+- [x] Adjust player positioning for better shot angles
+- [ ] Test shooting accuracy from different court positions
+
+### Player Animations & Polish
+- [ ] Enhance player running animations with better arm motion
+- [ ] Improve idle stance and posture
+- [ ] Add smooth transitions between animation states
+- [ ] Improve player sprite quality and detail
+- [ ] Add player rotation/facing based on movement direction
+
+### Testing & Validation
+- [x] Test player grounding in all court areas
+- [x] Verify shooting directions and accuracy
+- [ ] Check animation smoothness and quality
+- [ ] Test on different screen sizes

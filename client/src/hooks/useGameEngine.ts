@@ -132,7 +132,8 @@ function createBall(carrier: PlayerState): BallState {
 
 // ========== GOAL & ZONE HELPERS ==========
 function getGoalCenter(side: 'left' | 'right'): Vec2 {
-  return { x: side === 'left' ? 0 : COURT.WIDTH, y: COURT.HEIGHT / 2 };
+  // Goal centers: left goal at x=0, right goal at x=900, both at court center y
+  return { x: side === 'left' ? GOAL.WIDTH / 2 : COURT.WIDTH - GOAL.WIDTH / 2, y: COURT.HEIGHT / 2 };
 }
 
 function isInGoal(ballPos: Vec2, side: 'left' | 'right'): boolean {
@@ -249,7 +250,8 @@ function executePass(s: GameState, passer: PlayerState, target: PlayerState) {
 // Execute a shot toward goal with shot quality system
 function executeShot(s: GameState, shooter: PlayerState, targetGoal: Vec2) {
   const goalHalfW = GOAL.WIDTH / 2;
-  const aimY = COURT.HEIGHT / 2 + (Math.random() - 0.5) * goalHalfW * 0.5;
+  // Aim at goal center with slight random variation for realism
+  const aimY = targetGoal.y + (Math.random() - 0.5) * goalHalfW * 0.3;
   const aimPos = { x: targetGoal.x, y: aimY };
   const dir = normalize({ x: aimPos.x - shooter.pos.x, y: aimPos.y - shooter.pos.y });
 
@@ -312,7 +314,8 @@ function executeShot(s: GameState, shooter: PlayerState, targetGoal: Vec2) {
 // Execute a shot with power/accuracy multipliers from the shot meter
 function executeMeterShot(s: GameState, shooter: PlayerState, targetGoal: Vec2, powerMult: number, accuracyMult: number) {
   const goalHalfW = GOAL.WIDTH / 2;
-  const aimY = COURT.HEIGHT / 2 + (Math.random() - 0.5) * goalHalfW * 0.5;
+  // Aim at goal center with accuracy multiplier affecting spread
+  const aimY = targetGoal.y + (Math.random() - 0.5) * goalHalfW * 0.4 * (1 - accuracyMult * 0.5);
   const aimPos = { x: targetGoal.x, y: aimY };
   const dir = normalize({ x: aimPos.x - shooter.pos.x, y: aimPos.y - shooter.pos.y });
 

@@ -231,10 +231,10 @@ function drawPlayer(ctx: CanvasRenderingContext2D, p: PlayerState, team: TeamDat
 
   // ---- GROUND SHADOW (anchors player to court) ----
   ctx.save();
-  const shScale = isAirborne ? Math.max(0.4, 1 - p.jumpZ * 0.012) : 1;
-  const shAlpha = isAirborne ? Math.max(0.08, 0.3 - p.jumpZ * 0.005) : 0.3;
+  const shScale = isAirborne ? Math.max(0.3, 1 - p.jumpZ * 0.015) : 1;
+  const shAlpha = isAirborne ? Math.max(0.05, 0.35 - p.jumpZ * 0.006) : 0.4;
   ctx.beginPath();
-  ctx.ellipse(sx, sy + 2 * s, 10 * s * shScale, 3 * s * shScale, 0, 0, Math.PI * 2);
+  ctx.ellipse(sx, sy + 3 * s, 12 * s * shScale, 4 * s * shScale, 0, 0, Math.PI * 2);
   ctx.fillStyle = `rgba(0,0,0,${shAlpha})`;
   ctx.fill();
   ctx.restore();
@@ -258,14 +258,14 @@ function drawPlayer(ctx: CanvasRenderingContext2D, p: PlayerState, team: TeamDat
   const spriteAspect = spriteReady ? spriteImg!.naturalWidth / spriteImg!.naturalHeight : 0.745;
   const SPRITE_DRAW_W = SPRITE_DRAW_H * spriteAspect;
 
-  // Animation: subtle bob when running
+  // Animation: subtle bob when running (reduced to prevent floating)
   const runPhase = frame * 0.22 + p.id * 1.7;
-  const bodyBob = isMoving ? Math.abs(Math.sin(runPhase)) * 1.5 * s : 0;
+  const bodyBob = isMoving ? Math.abs(Math.sin(runPhase)) * 0.8 * s : 0;
 
-  // Draw the sprite
+  // Draw the sprite (properly grounded to shadow)
   ctx.save();
   const drawX = sx;
-  const drawY = sy - bodyBob - jumpOffset;
+  const drawY = sy - bodyBob - jumpOffset - 2 * s; // Anchor sprite to ground shadow
 
   ctx.translate(drawX, drawY);
 
