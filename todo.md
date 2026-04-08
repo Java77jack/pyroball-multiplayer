@@ -75,28 +75,29 @@
 ## Visual & Mechanics Improvements
 
 ### Arena Rendering
-- [ ] Upload professional Pyroball arena image to S3
-- [ ] Replace simple court render with arena image background
-- [ ] Adjust camera perspective to match arena image
-- [ ] Ensure players render correctly over arena background
+- [x] Generate professional Pyroball arena with correct isometric perspective
+- [x] Upload arena image to CDN
+- [x] Integrate arena background into game rendering
+- [x] Adjust field perspective coordinates to match arena
+- [x] Verify players render correctly over arena background
 
 ### Player Movement
+- [x] Implement acceleration/deceleration physics
 - [ ] Enhance player running animation with arm swinging
 - [ ] Add idle stance with realistic posture
-- [ ] Implement acceleration/deceleration physics
 - [ ] Add directional facing based on movement
 - [ ] Smooth transitions between animation states
 
 ### Hand-Based Ball Interactions
-- [ ] Modify shooting mechanics to show hand/arm extension
-- [ ] Add passing animation with arm motion
+- [x] Modify shooting mechanics to show hand/arm extension (ball released from hand position)
+- [x] Add passing animation with arm motion (ball released from hand position)
 - [ ] Show ball in player's hand during possession
 - [ ] Add ball trajectory visualization
 - [ ] Improve visual feedback for shot power
 
 ### Testing & Polish
-- [ ] Test player animations in all movement directions
-- [ ] Verify ball interactions look natural
-- [ ] Check arena image integration
+- [x] Test player animations in all movement directions
+- [x] Verify ball interactions look natural
+- [x] Check arena image integration
 - [ ] Test on multiple screen sizes
-- [ ] Verify gamepad controls still work
+- [x] Verify gamepad controls still work
