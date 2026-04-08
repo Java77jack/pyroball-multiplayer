@@ -445,5 +445,5 @@ export const ASSET_URLS = {
   arenaBg: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663476839256/L959pTVNCfBxbsJyQ7g7yz/pyroball_arena_bg-ankZeiYwyw9qRgkFpwuWbZ.webp',
   fireball: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663476839256/L959pTVNCfBxbsJyQ7g7yz/pyroball_fireball-E9tvDuBzFBX857r47XAGv2.webp',
   courtTexture: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663476839256/L959pTVNCfBxbsJyQ7g7yz/pyroball_court_texture-gK5TRuoWCeFughgBycJaaZ.webp',
-  arenaHQ: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663489271487/bLh3StKHGXUj5K9umHEgwQ/pyroball_arena_sideside-8pvUucFKiqG92mfqcAqsFH.webp',
+  arenaHQ: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663476839256/L959pTVNCfBxbsJyQ7g7yz/pyroball-arena-apa-N98nMAKFxq9yoCS9XaN95v.webp',
 } as const;

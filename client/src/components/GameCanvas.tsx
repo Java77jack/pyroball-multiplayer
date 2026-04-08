@@ -33,11 +33,11 @@ const CANVAS_H = 540;
 
 const FIELD = {
   // Far edge (gy=0, top/left of image — further from camera)
-  farLeft:   { x: 160, y: 280 },   // gx=0, gy=0   (top-left corner of court)
-  farRight:  { x: 800, y: 260 },   // gx=900, gy=0 (top-right corner)
+  farLeft:   { x: 148, y: 192 },   // gx=0, gy=0   (top-left corner of court)
+  farRight:  { x: 775, y: 138 },   // gx=900, gy=0 (top-right corner — HIGHER)
   // Near edge (gy=500, bottom/right of image — closer to camera)
-  nearLeft:  { x: 110, y: 480 },   // gx=0, gy=500 (bottom-left corner)
-  nearRight: { x: 850, y: 460 },   // gx=900, gy=500 (bottom-right)
+  nearLeft:  { x: 82,  y: 428 },   // gx=0, gy=500 (bottom-left corner)
+  nearRight: { x: 862, y: 348 },   // gx=900, gy=500 (bottom-right — HIGHER than nearLeft)
 };
 
 // --- Build field clipping path (quadrilateral) ---
@@ -203,8 +203,6 @@ function drawGoals(ctx: CanvasRenderingContext2D, gs: GameState, frame: number) 
 // DRAW PLAYER — Sprite-based rendering with 5 poses per team
 // ============================================================
 function drawPlayer(ctx: CanvasRenderingContext2D, p: PlayerState, team: TeamData, frame: number, gs: GameState) {
-  // Draw all players (no idle players filtered out in arena render)
-  
   const { x: gx, y: gy } = p.pos;
   const proj = project(gx, gy);
   const { x: sx, y: sy, scale: rawS } = proj;
@@ -470,7 +468,11 @@ function drawPlayer(ctx: CanvasRenderingContext2D, p: PlayerState, team: TeamDat
     ? `rgba(${hexToRgb(team.glow)}, 0.75)`
     : 'rgba(0, 0, 0, 0.55)';
   ctx.fill();
-  // Removed stroke border to eliminate white outline
+  ctx.strokeStyle = p.isControlled
+    ? team.glow
+    : `rgba(${hexToRgb(team.secondary)}, 0.35)`;
+  ctx.lineWidth = 0.5;
+  ctx.stroke();
 
   ctx.fillStyle = p.isControlled ? '#FFFFFF' : 'rgba(255,255,255,0.85)';
   ctx.fillText(labelText, sx, labelY);

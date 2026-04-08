@@ -490,8 +490,7 @@ export function usePracticeEngine(teamId: string, drill: DrillDef) {
           const passSpeed = PLAYER.PASS_POWER * (isNoLook ? 1.3 : 1.0);
           s.ball.carrier = null;
           s.ball.vel = { x: dir.x * passSpeed, y: dir.y * passSpeed };
-          // Ball released from hand (higher up) with forward offset
-          s.ball.pos = { x: controlled.pos.x + dir.x * 12, y: controlled.pos.y + dir.y * 12 - 8 };
+          s.ball.pos = { ...controlled.pos };
           s.ball.passIntended = best.id;
           s.ball.lastPasser = controlled.id;
           playPass();
@@ -620,8 +619,7 @@ export function usePracticeEngine(teamId: string, drill: DrillDef) {
         controlled.hasBall = false;
         s.ball.carrier = null;
         s.ball.vel = { x: dir.x * power, y: dir.y * power };
-        // Ball released from hand (higher up) with forward offset
-        s.ball.pos = { x: controlled.pos.x + dir.x * 12, y: controlled.pos.y + dir.y * 12 - 10 };
+        s.ball.pos = { ...controlled.pos };
         s.ball.z = controlled.jumpZ || 0;
         s.ball.vz = controlled.isJumping ? 3 : 2;
         s.ball.lastShooter = controlled.id;
@@ -647,21 +645,11 @@ export function usePracticeEngine(teamId: string, drill: DrillDef) {
     }
 
     // ---- PLAYER MOVEMENT ----
-    // Controlled player follows joystick with smooth acceleration
+    // Controlled player follows joystick
     if (controlled && !s.shotMeter.active) {
       const speed = PLAYER.SPEED;
-      const mag = Math.sqrt(joy.x * joy.x + joy.y * joy.y);
-      const acceleration = 0.15;
-      const deceleration = 0.12;
-      
-      if (mag > 0.1) {
-        const targetVel = { x: joy.x * speed, y: joy.y * speed };
-        controlled.vel.x += (targetVel.x - controlled.vel.x) * acceleration;
-        controlled.vel.y += (targetVel.y - controlled.vel.y) * acceleration;
-      } else {
-        controlled.vel.x *= (1 - deceleration);
-        controlled.vel.y *= (1 - deceleration);
-      }
+      controlled.vel.x = joy.x * speed;
+      controlled.vel.y = joy.y * speed;
     } else if (controlled && s.shotMeter.active) {
       controlled.vel.x = 0;
       controlled.vel.y = 0;
