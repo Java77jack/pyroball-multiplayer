@@ -5,6 +5,10 @@ import {
   ASSET_URLS,
   type GameState, type PlayerState, type TeamData, type ShotMeterState,
 } from '@/lib/gameConstants';
+import {
+  createCameraState, updateCamera, applyCameraTransform,
+  type CameraState,
+} from '@/lib/broadcastCamera';
 
 // ============================================================
 // PERSPECTIVE 3D RENDERING ENGINE
@@ -1038,6 +1042,8 @@ export default function GameCanvas({ gameState }: GameCanvasProps) {
   const sizedRef = useRef(false);
   const bgImageRef = useRef<HTMLImageElement | null>(null);
   const bgLoadedRef = useRef(false);
+  const camRef = useRef<CameraState>(createCameraState());
+  const lastTimeRef = useRef(performance.now());
 
   // Load arena background image
   useEffect(() => {
@@ -1056,14 +1062,21 @@ export default function GameCanvas({ gameState }: GameCanvasProps) {
 
     ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
 
-    // ---- CAMERA SHAKE + ZOOM ----
+    // ---- BROADCAST CAMERA SYSTEM ----
+    const now = performance.now();
+    const dt = Math.min((now - lastTimeRef.current) / 1000, 0.05); // cap at 50ms
+    lastTimeRef.current = now;
+
+    // Update broadcast camera state
+    const cam = camRef.current;
+    updateCamera(cam, gs, CANVAS_W, CANVAS_H, project, dt);
+
     ctx.save();
-    const zoom = gs.cameraZoom || 1;
-    if (zoom !== 1) {
-      ctx.translate(CANVAS_W / 2, CANVAS_H / 2);
-      ctx.scale(zoom, zoom);
-      ctx.translate(-CANVAS_W / 2, -CANVAS_H / 2);
-    }
+    // Apply broadcast camera transform (pan + zoom)
+    applyCameraTransform(ctx, cam, CANVAS_W, CANVAS_H);
+
+    // Layer game-event camera effects on top of broadcast camera
+    // Camera shake from goals/events
     if (gs.cameraShake > 0) {
       const shakeX = (Math.random() - 0.5) * gs.cameraShake * 8;
       const shakeY = (Math.random() - 0.5) * gs.cameraShake * 8;
@@ -1121,13 +1134,13 @@ export default function GameCanvas({ gameState }: GameCanvasProps) {
       }
     });
 
-    // ---- SHOT METER (above charging player) ----
+    // ---- SHOT METER (above charging player — stays in camera space) ----
     drawShotMeter(ctx, gs, frame);
 
-    // ---- MINIMAL OVERLAYS (goal flash + countdown only) ----
-    drawMinimalOverlays(ctx, gs, frame);
+    ctx.restore(); // end broadcast camera + shake transform
 
-    ctx.restore(); // camera shake + zoom
+    // ---- SCREEN-SPACE OVERLAYS (not affected by camera pan/zoom) ----
+    drawMinimalOverlays(ctx, gs, frame);
   }, []);
 
   useEffect(() => {

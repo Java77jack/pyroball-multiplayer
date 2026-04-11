@@ -140,3 +140,15 @@
 - [x] Add Run-In Zone Rule to Scoring Zones section
 - [x] Add LED Backboard info to Special Mechanics section
 - [x] Update court description with new goal specs (6ft tall, 4ft LED, 2ft setback)
+
+## Dynamic Broadcast Camera System
+- [x] Analyze current camera/rendering pipeline (projection, shake, zoom)
+- [x] Design camera state machine (offense, transition, scoring zone, shot focus)
+- [x] Implement smooth ball-carrier tracking with forward anticipation offset
+- [x] Implement context-aware zoom (widen on transitions, tighten near goal)
+- [x] Implement easing/lerp for all camera movement (no snapping)
+- [x] Integrate camera transform into GameCanvas render loop
+- [x] Ensure both offensive and defensive players remain visible
+- [x] Maintain consistent scale (no drastic zoom changes)
+- [x] Prioritize gameplay readability over cinematic effects
+- [x] Write vitest for camera state logic
