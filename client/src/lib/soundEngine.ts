@@ -465,6 +465,150 @@ export function playAnnouncerStinger() {
   createOsc(ctx, 'triangle', 1200, 0.03, t + 0.02, t + 0.06, master, 1500);
 }
 
+// ========== DYNAMIC CROWD AUDIO ==========
+
+let crowdAmbientSource: AudioBufferSourceNode | null = null;
+let crowdAmbientGain: GainNode | null = null;
+let crowdAmbientRunning = false;
+
+/**
+ * Start ambient crowd murmur loop — continuous low-level crowd noise
+ * Volume scales with excitement parameter (0-1)
+ */
+export function startCrowdAmbient() {
+  if (crowdAmbientRunning) return;
+  const ctx = getCtx();
+  const master = getMaster();
+
+  // Create a long noise buffer for looping crowd bed
+  const duration = 4; // 4 second loop
+  const bufferSize = ctx.sampleRate * duration;
+  const buffer = ctx.createBuffer(2, bufferSize, ctx.sampleRate);
+
+  // Generate stereo crowd noise with varying texture
+  for (let ch = 0; ch < 2; ch++) {
+    const data = buffer.getChannelData(ch);
+    let prev = 0;
+    for (let i = 0; i < bufferSize; i++) {
+      // Brownian noise (smoother, more crowd-like)
+      prev = prev * 0.997 + (Math.random() * 2 - 1) * 0.003;
+      // Add some random chatter bursts
+      const chatter = Math.random() < 0.001 ? (Math.random() - 0.5) * 0.3 : 0;
+      data[i] = prev * 15 + chatter;
+    }
+  }
+
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  src.loop = true;
+
+  // Bandpass filter for crowd-like frequency range
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.value = 600;
+  filter.Q.value = 0.5;
+
+  // Second filter for warmth
+  const lpf = ctx.createBiquadFilter();
+  lpf.type = 'lowpass';
+  lpf.frequency.value = 2000;
+
+  const gain = ctx.createGain();
+  gain.gain.value = 0.03; // Start quiet
+
+  src.connect(filter);
+  filter.connect(lpf);
+  lpf.connect(gain);
+  gain.connect(master);
+  src.start();
+
+  crowdAmbientSource = src;
+  crowdAmbientGain = gain;
+  crowdAmbientRunning = true;
+}
+
+/**
+ * Update crowd ambient volume based on excitement (0-1)
+ */
+export function setCrowdExcitement(excitement: number) {
+  if (!crowdAmbientGain) return;
+  const ctx = getCtx();
+  // Map excitement to volume: 0.02 (quiet) to 0.12 (loud)
+  const vol = 0.02 + excitement * 0.10;
+  crowdAmbientGain.gain.linearRampToValueAtTime(
+    _muted ? 0 : vol,
+    ctx.currentTime + 0.1
+  );
+}
+
+/**
+ * Stop crowd ambient loop
+ */
+export function stopCrowdAmbient() {
+  if (crowdAmbientSource) {
+    try { crowdAmbientSource.stop(); } catch (_) {}
+    crowdAmbientSource = null;
+  }
+  crowdAmbientGain = null;
+  crowdAmbientRunning = false;
+}
+
+/**
+ * CROWD SURGE — Enhanced crowd roar for goal celebrations
+ * Layered noise with rising pitch and longer sustain
+ */
+export function playCrowdSurge(intensity: number = 1.0) {
+  const ctx = getCtx();
+  const master = getMaster();
+  const t = ctx.currentTime;
+  const vol = 0.08 * intensity;
+
+  // Multi-band crowd noise (richer than basic roar)
+  createNoise(ctx, vol * 1.2, t, t + 3.0, master, 800);   // low rumble
+  createNoise(ctx, vol * 0.8, t + 0.05, t + 2.5, master, 1500); // mid cheer
+  createNoise(ctx, vol * 0.5, t + 0.1, t + 2.0, master, 3000);  // high excitement
+  createNoise(ctx, vol * 0.3, t + 0.15, t + 1.5, master, 5000); // bright top
+
+  // Crowd "ohhh" — resonant tone that sweeps up
+  createOsc(ctx, 'sine', 200, vol * 0.4, t, t + 1.5, master, 350);
+  createOsc(ctx, 'sine', 300, vol * 0.3, t + 0.1, t + 1.2, master, 500);
+
+  // Sub bass impact
+  createOsc(ctx, 'sine', 60, vol * 0.5, t, t + 1.0, master, 40);
+}
+
+/**
+ * CROWD GASP — Short sharp intake for near-misses and big saves
+ */
+export function playCrowdGasp() {
+  const ctx = getCtx();
+  const master = getMaster();
+  const t = ctx.currentTime;
+
+  // Quick noise burst (inhale sound)
+  createNoise(ctx, 0.08, t, t + 0.4, master, 3000);
+  createNoise(ctx, 0.04, t + 0.05, t + 0.3, master, 6000);
+
+  // Brief silence then murmur
+  createNoise(ctx, 0.03, t + 0.5, t + 1.2, master, 1200);
+}
+
+/**
+ * CROWD CHANT — Rhythmic crowd chanting (for momentum/flow state)
+ */
+export function playCrowdChant() {
+  const ctx = getCtx();
+  const master = getMaster();
+  const t = ctx.currentTime;
+
+  // Rhythmic "hey" pattern — 4 beats
+  for (let i = 0; i < 4; i++) {
+    const offset = i * 0.4;
+    createNoise(ctx, 0.06, t + offset, t + offset + 0.15, master, 1800);
+    createOsc(ctx, 'sine', 250, 0.03, t + offset, t + offset + 0.12, master, 200);
+  }
+}
+
 /** Big impact — for screen shake moments */
 export function playBigImpact() {
   const ctx = getCtx();

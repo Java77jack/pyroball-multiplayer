@@ -21,6 +21,8 @@ import {
   playCountdownBeep, playHalftimeHorn, playFlowState, playTurnover,
   playPerfectRelease, playPowerShot, playOnFire, playFireExpired,
   playSuddenDeath, playAnnouncerStinger, playBigImpact,
+  startCrowdAmbient, setCrowdExcitement, stopCrowdAmbient, playCrowdSurge,
+  playCrowdChant,
 } from '@/lib/soundEngine';
 
 // ========== ANNOUNCER CALLOUT HELPERS ==========
@@ -244,6 +246,7 @@ function executePass(s: GameState, passer: PlayerState, target: PlayerState) {
     s.currentEvent = { type: 'FLOW_STATE', team: passer.teamId };
     s.eventTimer = 1.0;
     playFlowState();
+    playCrowdChant(); // Crowd starts chanting during flow state
   }
 }
 
@@ -691,6 +694,8 @@ export function useGameEngine(homeTeam: string, awayTeam: string, difficulty: Di
 
     // Crowd energy decay
     s.crowdEnergy = lerp(s.crowdEnergy, 0.3, dt * 0.5);
+    // Sync crowd audio excitement with visual crowd energy
+    setCrowdExcitement(s.crowdEnergy);
 
     // Decay per-player cooldowns + jump/spin physics
     s.players.forEach(p => {
@@ -1729,7 +1734,8 @@ export function useGameEngine(homeTeam: string, awayTeam: string, difficulty: Di
         s.goalEvents.push({ teamId: s.homeTeam, zone: pts, time: s.timer });
         fireEvent(s, { type: 'GOAL', team: s.homeTeam, points: pts });
         playGoalHorn();
-        playCrowdRoar();
+        playCrowdSurge(pts >= 3 ? 1.0 : 0.7); // Enhanced crowd surge on goals
+        setCrowdExcitement(1.0); // Max crowd excitement
         s.crowdEnergy = 1.0;
 
         // ON FIRE streak tracking
@@ -1797,7 +1803,8 @@ export function useGameEngine(homeTeam: string, awayTeam: string, difficulty: Di
         s.goalEvents.push({ teamId: s.awayTeam, zone: pts, time: s.timer });
         fireEvent(s, { type: 'GOAL', team: s.awayTeam, points: pts });
         playGoalHorn();
-        playCrowdRoar();
+        playCrowdSurge(pts >= 3 ? 1.0 : 0.7); // Enhanced crowd surge on goals
+        setCrowdExcitement(1.0); // Max crowd excitement
         s.crowdEnergy = 1.0;
 
         // ON FIRE streak tracking
@@ -1970,6 +1977,7 @@ export function useGameEngine(homeTeam: string, awayTeam: string, difficulty: Di
       lastRenderRef.current = 0;
       runningRef.current = true;
       actionQueueRef.current = [];
+      startCrowdAmbient(); // Start ambient crowd noise
       animFrameRef.current = requestAnimationFrame(gameLoop);
     }
   }, [gameLoop]);
@@ -1978,6 +1986,7 @@ export function useGameEngine(homeTeam: string, awayTeam: string, difficulty: Di
     runningRef.current = false;
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     animFrameRef.current = 0;
+    stopCrowdAmbient(); // Stop ambient crowd noise
   }, []);
 
   useEffect(() => {
@@ -1985,6 +1994,7 @@ export function useGameEngine(homeTeam: string, awayTeam: string, difficulty: Di
       runningRef.current = false;
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       animFrameRef.current = 0;
+      stopCrowdAmbient();
     };
   }, []);
 

@@ -152,3 +152,26 @@
 - [x] Maintain consistent scale (no drastic zoom changes)
 - [x] Prioritize gameplay readability over cinematic effects
 - [x] Write vitest for camera state logic
+
+## Team Logos (12 Missing)
+- [x] Generate logo for Glaciers
+- [x] Generate logo for Blue Claws
+- [x] Generate logo for Night Raid
+- [x] Generate logo for Seawolves
+- [x] Generate logo for Rebellion
+- [x] Generate logo for Railers
+- [x] Generate logo for Havoc
+- [x] Generate logo for Wrath
+- [x] Generate logo for Sizzle
+- [x] Generate logo for Hoppers
+- [x] Generate logo for Gauchos
+- [x] Generate logo for Engineers
+- [x] Upload all logos to CDN and update TEAMS data
+
+## Dynamic Crowd Reaction System
+- [x] Canvas-based crowd animation (arms waving, standing ovations on goals)
+- [x] Crowd color matching the scoring team
+- [x] Confetti burst effect on goals
+- [x] Intensity scaling (bigger reactions for clutch/overtime goals)
+- [x] Crowd audio effects (cheers on goals, ambient murmur during play)
+- [x] Write vitest for crowd reaction system

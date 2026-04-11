@@ -9,6 +9,10 @@ import {
   createCameraState, updateCamera, applyCameraTransform,
   type CameraState,
 } from '@/lib/broadcastCamera';
+import {
+  createCrowdState, updateCrowd, drawCrowd, drawCrowdGlow,
+  type CrowdState,
+} from '@/lib/crowdSystem';
 
 // ============================================================
 // PERSPECTIVE 3D RENDERING ENGINE
@@ -1043,6 +1047,7 @@ export default function GameCanvas({ gameState }: GameCanvasProps) {
   const bgImageRef = useRef<HTMLImageElement | null>(null);
   const bgLoadedRef = useRef(false);
   const camRef = useRef<CameraState>(createCameraState());
+  const crowdRef = useRef<CrowdState>(createCrowdState(CANVAS_W, CANVAS_H));
   const lastTimeRef = useRef(performance.now());
 
   // Load arena background image
@@ -1092,6 +1097,11 @@ export default function GameCanvas({ gameState }: GameCanvasProps) {
       ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
     }
 
+    // ---- DYNAMIC CROWD (drawn on top of arena bg, behind field elements) ----
+    const crowd = crowdRef.current;
+    updateCrowd(crowd, gs, dt, CANVAS_W, CANVAS_H);
+    drawCrowd(ctx, crowd, CANVAS_W, CANVAS_H);
+
     // ---- FIELD OVERLAY: scoring zones, court lines, labels ----
     // Field overlay removed — arena base image has all zones baked in
 
@@ -1140,6 +1150,7 @@ export default function GameCanvas({ gameState }: GameCanvasProps) {
     ctx.restore(); // end broadcast camera + shake transform
 
     // ---- SCREEN-SPACE OVERLAYS (not affected by camera pan/zoom) ----
+    drawCrowdGlow(ctx, crowdRef.current, CANVAS_W, CANVAS_H);
     drawMinimalOverlays(ctx, gs, frame);
   }, []);
 
