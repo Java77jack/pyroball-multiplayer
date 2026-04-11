@@ -13,6 +13,7 @@ import MatchResults from "./pages/MatchResults";
 import VSScreen from "./pages/VSScreen";
 import Practice from "./pages/Practice";
 import PracticeGame from "./pages/PracticeGame";
+import Season from "./pages/Season";
 import { GameProvider } from "./contexts/GameContext";
 import { markUserInteraction, preloadMusic } from "./lib/musicEngine";
 import { initAudio } from "./lib/soundEngine";
@@ -28,6 +29,7 @@ function Router() {
       <Route path={"/results"} component={MatchResults} />
       <Route path={"/practice"} component={Practice} />
       <Route path={"/practice-game"} component={PracticeGame} />
+      <Route path={"/season"} component={Season} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

@@ -175,3 +175,14 @@
 - [x] Intensity scaling (bigger reactions for clutch/overtime goals)
 - [x] Crowd audio effects (cheers on goals, ambient murmur during play)
 - [x] Write vitest for crowd reaction system
+
+## Season System Integration
+- [x] Add season.ts engine to client/src/lib/
+- [x] Update GameContext.tsx with season state and helpers
+- [x] Add Season.tsx page to client/src/pages/
+- [x] Update MatchResults.tsx with season-aware results flow
+- [x] Update Home.tsx with IGNITION SEASON menu item
+- [x] Update App.tsx with /season route
+- [x] Verify GoalEvent type compatibility
+- [x] Test compilation and fix any issues
+- [x] Write vitest for season engine (34 tests passing)

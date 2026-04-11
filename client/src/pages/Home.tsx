@@ -9,6 +9,7 @@ const HERO_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663476839256/L959p
 
 const MENU_ITEMS = [
   { label: 'PLAY', route: '/team-select', primary: true },
+  { label: 'IGNITION SEASON', route: '/season', primary: false },
   { label: 'PRACTICE', route: '/practice', primary: false },
   { label: 'TEAMS', route: '/team-select', primary: false },
   { label: 'HOW TO PLAY', route: '/how-to-play', primary: false },
