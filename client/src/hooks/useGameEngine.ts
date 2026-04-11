@@ -2,8 +2,8 @@ import { useRef, useCallback, useEffect, useState } from 'react';
 import {
   COURT, GOAL, PLAYER, BALL, MATCH, ZONES, AI, RUNOFF, DASHER_BOARDS,
   PRESSURE, PASS_CHAIN, SELFISH, STEAL_WINDOWS, SHOT_QUALITY,
-  MOMENTUM, INTENSITY, DEF_PERSONALITY, CAMERA, PLAYER_NAMES,
-  BACKBOARD, JUMP, SPIN, SHOT_METER, ON_FIRE, ANNOUNCER,
+  MOMENTUM, INTENSITY, DEF_PERSONALITY, CAMERA, PLAYER_NAMES, TEAMS,
+  BACKBOARD, JUMP, SPIN, SHOT_METER, ON_FIRE, ANNOUNCER, RUN_IN_ZONE,
   type Vec2, type PlayerState, type BallState, type GameState, type GameEvent, type ShotMeterState,
   type AnnouncerCallout,
 } from '@/lib/gameConstants';
@@ -488,6 +488,9 @@ export function useGameEngine(homeTeam: string, awayTeam: string, difficulty: Di
       speedLines: 0,
       screenFlash: 0,
       screenFlashColor: '#FFFFFF',
+      // Net physics & LED backboard
+      netDeform: null,
+      ledFlash: null,
     };
     stateRef.current = state;
     setGameState({ ...state });
@@ -603,6 +606,17 @@ export function useGameEngine(homeTeam: string, awayTeam: string, difficulty: Di
     }
     if (s.goalFlash > 0) s.goalFlash = Math.max(0, s.goalFlash - dt * 3);
     if (s.cameraShake > 0) s.cameraShake = Math.max(0, s.cameraShake - dt * 8);
+    // Net deform & LED flash decay
+    if (s.netDeform) {
+      s.netDeform.timer -= dt;
+      s.netDeform.intensity *= 0.96; // gradual settle
+      if (s.netDeform.timer <= 0) s.netDeform = null;
+    }
+    if (s.ledFlash) {
+      s.ledFlash.timer -= dt;
+      s.ledFlash.intensity = Math.max(0, s.ledFlash.intensity - dt * 1.5);
+      if (s.ledFlash.timer <= 0) s.ledFlash = null;
+    }
     if (s.flowState > 0) s.flowState = Math.max(0, s.flowState - dt);
     if (s.momentumBoost > 0) s.momentumBoost = Math.max(0, s.momentumBoost - dt);
     // Combo label display timer
@@ -856,7 +870,8 @@ export function useGameEngine(homeTeam: string, awayTeam: string, difficulty: Di
         const speed = PLAYER.SPEED * getSpeedMod(controlled);
         controlled.vel = { x: joy.x * speed, y: joy.y * speed };
       } else {
-        controlled.vel = { x: controlled.vel.x * 0.7, y: controlled.vel.y * 0.7 };
+        // No input: stop the player completely (no drift)
+        controlled.vel = { x: 0, y: 0 };
       }
     }
 
@@ -1244,6 +1259,8 @@ export function useGameEngine(homeTeam: string, awayTeam: string, difficulty: Di
     const intensityMult = (s.timer <= INTENSITY.FINAL_SECONDS ? INTENSITY.AI_AGGRESSION_MULT : 1.0) * kickoffGrace;
 
     awayPlayers.forEach(p => {
+      // Skip AI logic for controlled player - only joystick input controls them
+      if (p.isControlled) return;
       const speedMod = getSpeedMod(p);
 
       if (p.hasBall) {
@@ -1575,6 +1592,31 @@ export function useGameEngine(homeTeam: string, awayTeam: string, difficulty: Di
         p.vel.y *= BOUNCE_FACTOR;
         p.vel.x *= FRICTION;
       }
+
+      // ---- RUN-IN ZONE VIOLATION CHECK ----
+      if (p.hasBall) {
+        const courtCenterY = COURT.HEIGHT / 2;
+        const redZoneHalfW = RUN_IN_ZONE.CENTER_WIDTH / 2;
+        const isInRedZone = Math.abs(p.pos.y - courtCenterY) <= redZoneHalfW;
+        const isNearLeftGoal = p.pos.x <= GOAL.SETBACK + PLAYER.RADIUS;
+        const isNearRightGoal = p.pos.x >= COURT.WIDTH - GOAL.SETBACK - PLAYER.RADIUS;
+        
+        if ((isNearLeftGoal || isNearRightGoal) && isInRedZone) {
+          const violatingTeam = p.id < 3 ? 'home' : 'away';
+          const opposingTeam = violatingTeam === 'home' ? 'away' : 'home';
+          const opposingTeamId = opposingTeam === 'home' ? s.homeTeam : s.awayTeam;
+          
+          s.score[opposingTeam] += 1;
+          s.goalFlash = 1;
+          s.goalFlashTeam = opposingTeam;
+          s.cameraShake = 0.5;
+          s.goalEvents.push({ teamId: opposingTeamId, zone: 1, time: s.timer });
+          fireEvent(s, { type: 'GOAL', team: opposingTeamId, points: 1 });
+          playGoalHorn();
+          pushCallout(s, makeCallout('RED ZONE VIOLATION!', 'large', '#FF0000', 'rgba(255,0,0,0.8)', 'AUTOMATIC 1PT'));
+          resetPositions(s, opposingTeam);
+        }
+      }
     });
 
     // ========== BALL PHYSICS ==========
@@ -1681,6 +1723,9 @@ export function useGameEngine(homeTeam: string, awayTeam: string, difficulty: Di
         s.goalFlashTeam = s.homeTeam;
         s.cameraShake = 1;
         s.specialMeter = Math.min(1, s.specialMeter + 0.15);
+        // Net physics & LED backboard
+        s.netDeform = { side: 'right', intensity: Math.min(1, Math.sqrt(s.ball.vel.x ** 2 + s.ball.vel.y ** 2) / 12), timer: 1.5 };
+        s.ledFlash = { side: 'right', color: TEAMS[s.homeTeam]?.secondary || '#FFD700', intensity: 1.0, timer: 2.0 };
         s.goalEvents.push({ teamId: s.homeTeam, zone: pts, time: s.timer });
         fireEvent(s, { type: 'GOAL', team: s.homeTeam, points: pts });
         playGoalHorn();
@@ -1746,6 +1791,9 @@ export function useGameEngine(homeTeam: string, awayTeam: string, difficulty: Di
         s.goalFlashTeam = s.awayTeam;
         s.cameraShake = 1;
         s.specialMeter = Math.max(0, s.specialMeter - 0.1);
+        // Net physics & LED backboard
+        s.netDeform = { side: 'left', intensity: Math.min(1, Math.sqrt(s.ball.vel.x ** 2 + s.ball.vel.y ** 2) / 12), timer: 1.5 };
+        s.ledFlash = { side: 'left', color: TEAMS[s.awayTeam]?.secondary || '#FFD700', intensity: 1.0, timer: 2.0 };
         s.goalEvents.push({ teamId: s.awayTeam, zone: pts, time: s.timer });
         fireEvent(s, { type: 'GOAL', team: s.awayTeam, points: pts });
         playGoalHorn();

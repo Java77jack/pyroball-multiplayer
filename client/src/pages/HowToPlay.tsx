@@ -32,7 +32,8 @@ const sections = [
     items: [
       { icon: '🟠', label: 'Mid Zone — 1 Point', desc: 'The open field area around the goals. Easier to shoot from, but only worth 1 point.' },
       { icon: '🔴', label: 'Core Zone — 3 Points', desc: 'The center circle at midcourt, plus the shaft corridors running from center to each goal. High-risk, high-reward — worth 3 points!' },
-      { icon: '💡', label: 'Tip', desc: 'Shoot from the Core Zone or shaft corridors to score 3 points. Pass through the core before shooting for a chain bonus that widens your green zone.' },
+      { icon: '🚫', label: 'Run-In Zone Rule', desc: 'Running into the goal area from the RED CENTER ZONE is illegal! If you carry the ball into the goal end zone from the center, the opposing team gets 1 point and possession from center court. Run-ins are ONLY allowed from the SIDE ZONES next to the goal posts.' },
+      { icon: '💡', label: 'Tip', desc: 'Shoot from the Core Zone or shaft corridors to score 3 points. Use side lanes for run-ins. Pass through the core before shooting for a chain bonus that widens your green zone.' },
     ],
   },
   {
@@ -40,7 +41,8 @@ const sections = [
     items: [
       { icon: '🔥', label: 'FIRE Meter', desc: 'Build your FIRE meter by landing perfect (green zone) shots, making steals, and scoring goals. When the meter is full, the SHOOT button glows gold — press it for an unstoppable Power Shot that cannot be blocked!' },
       { icon: '⚡', label: 'Flow State', desc: 'Chain 4 or more consecutive passes to trigger FLOW STATE — your team moves faster and shoots more accurately for a short burst.' },
-      { icon: '🧱', label: 'Backboard & Rebounds', desc: 'Missed shots that go high hit the glass backboard above the goal and bounce back into play. Jump (Q) to grab the rebound before the opponent does!' },
+      { icon: '🧱', label: 'Backboard & Rebounds', desc: 'Missed shots that go high hit the 4ft LED glass backboard above the 6ft goal and bounce back into play. Jump (Q) to grab the rebound before the opponent does!' },
+      { icon: '💡', label: 'LED Backboard', desc: 'When a goal is scored, the LED backboard above the crossbar lights up in the scoring team\'s colors with a pulsing strobe effect! The net also deforms realistically when the ball hits it.' },
       { icon: '🔥', label: 'ON FIRE Streak', desc: 'Score 3 unanswered goals in a row and your team goes ON FIRE! All players get a 20% speed boost and auto-perfect shots for 15 seconds. Fire aura particles surround your players and the screen pulses orange. The announcer screams "ON FIRE!" — dominate before it expires!' },
       { icon: '📢', label: 'Announcer Callouts', desc: 'The announcer reacts to big plays in real-time! Score from downtown, pull off a steal, land a combo move, or go ON FIRE — each triggers a dramatic on-screen callout with hype text and visual effects.' },
     ],
@@ -167,7 +169,7 @@ export default function HowToPlay() {
         >
           <div className="p-3" style={{ background: 'rgba(255,255,255,0.04)' }}>
             <p className="text-white/50 text-xs text-center" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-              🏟️ <strong style={{ color: 'rgba(255,255,255,0.7)' }}>APA Blueprint Court</strong> — Goals on both short ends. Core zone at center (3pts). Mid zone everywhere else (1pt). Chain passes through the core for maximum impact!
+              🏟️ <strong style={{ color: 'rgba(255,255,255,0.7)' }}>APA Blueprint Court</strong> — 90ft × 50ft turf field. 20ft wide × 6ft tall goals with 4ft LED backboards, set 2ft from end lines. Core zone at center (3pts). Mid zone elsewhere (1pt). No run-ins from center red zone — use side lanes only!
             </p>
           </div>
         </motion.div>

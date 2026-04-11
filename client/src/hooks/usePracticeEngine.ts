@@ -239,6 +239,7 @@ export function usePracticeEngine(teamId: string, drill: DrillDef) {
       onFireTeam: null, onFireTimer: 0, homeStreak: 0, awayStreak: 0,
       announcer: [],
       hitFreeze: 0, speedLines: 0, screenFlash: 0, screenFlashColor: '#FFFFFF',
+      netDeform: null, ledFlash: null,
     };
     stateRef.current = state;
     progressRef.current = {

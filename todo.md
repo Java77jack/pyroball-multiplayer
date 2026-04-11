@@ -98,3 +98,45 @@
 - [x] Verify shooting directions and accuracy
 - [ ] Check animation smoothness and quality
 - [ ] Test on different screen sizes
+
+## Arena Revamp & Visual Overhaul
+
+### New Arena Image
+- [x] Generate new arena with turf surface, skybox, luxury seating, upper deck crowds
+- [x] Add sponsor dasher boards (ND Games, Viiwi Mobile, Dubby Energy, Terp Fiendz, ND Labels)
+- [x] Update arena background image in ASSET_URLS
+- [x] Recalibrate projection grid for new arena alignment
+
+### Goal Updates
+- [x] Update goal height to 6ft (from 8ft)
+- [x] Update LED backboard to 4ft (total 10ft)
+- [x] Add 2ft goal setback from field end line (run-in zone)
+- [x] Update GOAL and BACKBOARD constants in gameConstants.ts
+
+### Run-In Zone Rule
+- [x] Add RUN_IN_ZONE constants (center red zone width, side zone)
+- [x] Implement run-in violation detection in useGameEngine.ts
+- [x] Award 1pt to opposing team on center zone run-in violation
+- [x] Reset possession from center after violation
+- [x] Write vitest for run-in zone rule
+
+### 16 Team Sprites
+- [x] Generate sprite sheets for all 16 teams (Inferno, Vortex, Empire, Sledge, Glaciers, BlueClaws, NightRaid, Seawolves, Rebellion, Railers, Havoc, Wrath, Sizzle, Hoppers, Gauchos, Engineers)
+- [x] Upload all 16 sprite sheets to CDN
+- [x] Add spriteSheet field to TeamData interface
+- [x] Expand TEAMS object to all 16 teams with CDN sprite URLs
+- [x] Update sprite rendering system to use sprite sheet source rectangles
+- [x] Update TeamSelect page with animations for all 16 teams
+
+### Net Physics & LED Backboard Effects
+- [x] Add netDeform and ledFlash to GameState interface
+- [x] Trigger net deformation on goal scored (mesh bulge + wobble)
+- [x] Trigger LED backboard flash in team colors on goal scored
+- [x] Add decay timers for net deform and LED flash
+- [x] Render net mesh lines with quadratic curve deformation
+- [x] Render LED backboard with pulsing strobe glow effect
+
+### HowToPlay Updates
+- [x] Add Run-In Zone Rule to Scoring Zones section
+- [x] Add LED Backboard info to Special Mechanics section
+- [x] Update court description with new goal specs (6ft tall, 4ft LED, 2ft setback)

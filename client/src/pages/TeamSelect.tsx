@@ -14,22 +14,22 @@ const teamAnimations: Record<string, {
   bgEffect: string;
   particles: 'fire' | 'swirl' | 'sparkle' | 'sparks';
 }> = {
-  inferno: {
-    bgEffect: 'radial-gradient(ellipse at 50% 60%, rgba(255,69,0,0.25) 0%, rgba(255,100,0,0.08) 40%, transparent 70%)',
-    particles: 'fire',
-  },
-  vortex: {
-    bgEffect: 'radial-gradient(ellipse at 50% 50%, rgba(0,180,216,0.2) 0%, rgba(62,146,204,0.06) 40%, transparent 70%)',
-    particles: 'swirl',
-  },
-  empire: {
-    bgEffect: 'radial-gradient(ellipse at 50% 50%, rgba(255,215,0,0.15) 0%, rgba(255,184,0,0.05) 40%, transparent 70%)',
-    particles: 'sparkle',
-  },
-  sledge: {
-    bgEffect: 'radial-gradient(ellipse at 50% 70%, rgba(255,184,0,0.15) 0%, rgba(192,192,192,0.06) 40%, transparent 70%)',
-    particles: 'sparks',
-  },
+  inferno:   { bgEffect: 'radial-gradient(ellipse at 50% 60%, rgba(255,69,0,0.25) 0%, rgba(255,100,0,0.08) 40%, transparent 70%)', particles: 'fire' },
+  vortex:    { bgEffect: 'radial-gradient(ellipse at 50% 50%, rgba(0,180,216,0.2) 0%, rgba(62,146,204,0.06) 40%, transparent 70%)', particles: 'swirl' },
+  empire:    { bgEffect: 'radial-gradient(ellipse at 50% 50%, rgba(255,215,0,0.15) 0%, rgba(255,184,0,0.05) 40%, transparent 70%)', particles: 'sparkle' },
+  sledge:    { bgEffect: 'radial-gradient(ellipse at 50% 70%, rgba(255,184,0,0.15) 0%, rgba(192,192,192,0.06) 40%, transparent 70%)', particles: 'sparks' },
+  glaciers:  { bgEffect: 'radial-gradient(ellipse at 50% 50%, rgba(79,195,247,0.2) 0%, rgba(224,240,255,0.06) 40%, transparent 70%)', particles: 'swirl' },
+  blueclaws: { bgEffect: 'radial-gradient(ellipse at 50% 50%, rgba(33,150,243,0.2) 0%, rgba(13,71,161,0.08) 40%, transparent 70%)', particles: 'swirl' },
+  nightraid: { bgEffect: 'radial-gradient(ellipse at 50% 50%, rgba(206,147,216,0.2) 0%, rgba(123,31,162,0.08) 40%, transparent 70%)', particles: 'sparkle' },
+  seawolves: { bgEffect: 'radial-gradient(ellipse at 50% 50%, rgba(0,191,165,0.2) 0%, rgba(0,77,64,0.08) 40%, transparent 70%)', particles: 'swirl' },
+  rebellion: { bgEffect: 'radial-gradient(ellipse at 50% 60%, rgba(255,23,68,0.25) 0%, rgba(211,47,47,0.08) 40%, transparent 70%)', particles: 'fire' },
+  railers:   { bgEffect: 'radial-gradient(ellipse at 50% 70%, rgba(207,216,220,0.15) 0%, rgba(144,164,174,0.06) 40%, transparent 70%)', particles: 'sparks' },
+  havoc:     { bgEffect: 'radial-gradient(ellipse at 50% 50%, rgba(255,234,0,0.2) 0%, rgba(255,214,0,0.06) 40%, transparent 70%)', particles: 'sparkle' },
+  wrath:     { bgEffect: 'radial-gradient(ellipse at 50% 60%, rgba(213,0,0,0.25) 0%, rgba(139,0,0,0.08) 40%, transparent 70%)', particles: 'fire' },
+  sizzle:    { bgEffect: 'radial-gradient(ellipse at 50% 50%, rgba(255,64,129,0.2) 0%, rgba(233,30,99,0.06) 40%, transparent 70%)', particles: 'sparkle' },
+  hoppers:   { bgEffect: 'radial-gradient(ellipse at 50% 50%, rgba(118,255,3,0.2) 0%, rgba(100,221,23,0.06) 40%, transparent 70%)', particles: 'swirl' },
+  gauchos:   { bgEffect: 'radial-gradient(ellipse at 50% 50%, rgba(255,183,77,0.2) 0%, rgba(212,165,116,0.06) 40%, transparent 70%)', particles: 'sparks' },
+  engineers: { bgEffect: 'radial-gradient(ellipse at 50% 60%, rgba(255,109,0,0.25) 0%, rgba(191,54,12,0.08) 40%, transparent 70%)', particles: 'fire' },
 };
 
 // Particle components

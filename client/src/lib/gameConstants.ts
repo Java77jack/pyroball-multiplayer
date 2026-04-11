@@ -13,19 +13,28 @@ export const COURT = {
 
 export const GOAL = {
   WIDTH: 200,      // 20ft on 50ft side: 20/50*500 = 200 game units
+  HEIGHT: 60,      // 6ft tall goal opening (was 8ft)
   NET_DEPTH: 15,
-  LED_HEIGHT: 20,
-  TOTAL_HEIGHT: 60,
+  SETBACK: 20,     // 2ft from field end line (2/90*900 = 20 game units)
+  TOTAL_HEIGHT: 100,
 } as const;
 
-// Backboard: 20ft wide, 4ft tall LED panel above 8ft crossbar (12ft total)
+// Backboard: 20ft wide, 4ft tall LED panel above 6ft goal (10ft total)
 export const BACKBOARD = {
   WIDTH: GOAL.WIDTH,
-  HEIGHT_BOTTOM: 80,         // Crossbar height (8ft in z-units)
-  HEIGHT_TOP: 120,           // Top of backboard (12ft in z-units)
+  HEIGHT_BOTTOM: 60,         // Crossbar height (6ft in z-units)
+  HEIGHT_TOP: 100,           // Top of backboard (10ft in z-units)
+  LED_HEIGHT: 40,            // 4ft LED panel
   REBOUND_SPEED: 0.55,
   POST_REBOUND_SPEED: 0.4,
-  CROSSBAR_HEIGHT: 80,
+  CROSSBAR_HEIGHT: 60,
+} as const;
+
+// Run-in zones: side areas where run-ins are allowed
+// Red zone (center): NO run-ins allowed
+export const RUN_IN_ZONE = {
+  CENTER_WIDTH: 100,  // Center red zone width (10ft on 50ft side)
+  SIDE_WIDTH: (GOAL.WIDTH - 100) / 2,  // Side run zones (5ft each side)
 } as const;
 
 
@@ -284,22 +293,47 @@ export interface TeamData {
   glow: string;
   accent: string;
   logo: string;
+  spriteSheet: string;
 }
 
 export const TEAMS: Record<string, TeamData> = {
-  inferno: { id: 'inferno', name: 'Inferno', primary: '#1a1a1a', secondary: '#FF6B00', glow: '#FF4500', accent: '#FFB800', logo: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663476839256/L959pTVNCfBxbsJyQ7g7yz/logo_inferno_transparent_5b2bf189.png' },
-  vortex: { id: 'vortex', name: 'Vortex', primary: '#0a2463', secondary: '#3E92CC', glow: '#00B4D8', accent: '#90E0EF', logo: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663476839256/L959pTVNCfBxbsJyQ7g7yz/logo_vortex_transparent_68e2cef4.png' },
-  empire: { id: 'empire', name: 'Empire', primary: '#f0f0f0', secondary: '#FFB800', glow: '#FFD700', accent: '#1a1a1a', logo: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663476839256/L959pTVNCfBxbsJyQ7g7yz/logo_empires_transparent_cc5483fd.png' },
-  sledge: { id: 'sledge', name: 'Sledge', primary: '#4a4a5a', secondary: '#C0C0C0', glow: '#FFB800', accent: '#2a2a3a', logo: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663476839256/L959pTVNCfBxbsJyQ7g7yz/logo_sledge_transparent_772d4485.png' },
+  inferno:   { id: 'inferno',   name: 'Inferno',    primary: '#1a1a1a', secondary: '#FF6B00', glow: '#FF4500', accent: '#FFB800', logo: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663476839256/L959pTVNCfBxbsJyQ7g7yz/logo_inferno_transparent_5b2bf189.png', spriteSheet: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663489271487/bLh3StKHGXUj5K9umHEgwQ/sprites_inferno_c22c885b.png' },
+  vortex:    { id: 'vortex',    name: 'Vortex',     primary: '#0a2463', secondary: '#3E92CC', glow: '#00B4D8', accent: '#90E0EF', logo: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663476839256/L959pTVNCfBxbsJyQ7g7yz/logo_vortex_transparent_68e2cef4.png', spriteSheet: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663489271487/bLh3StKHGXUj5K9umHEgwQ/sprites_vortex_0871eeaf.png' },
+  empire:    { id: 'empire',    name: 'Empire',     primary: '#f0f0f0', secondary: '#FFB800', glow: '#FFD700', accent: '#1a1a1a', logo: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663476839256/L959pTVNCfBxbsJyQ7g7yz/logo_empires_transparent_cc5483fd.png', spriteSheet: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663489271487/bLh3StKHGXUj5K9umHEgwQ/sprites_empire_62ecaefa.png' },
+  sledge:    { id: 'sledge',    name: 'Sledge',     primary: '#4a4a5a', secondary: '#C0C0C0', glow: '#FFB800', accent: '#2a2a3a', logo: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663476839256/L959pTVNCfBxbsJyQ7g7yz/logo_sledge_transparent_772d4485.png', spriteSheet: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663489271487/bLh3StKHGXUj5K9umHEgwQ/sprites_sledge_14db7467.png' },
+  glaciers:  { id: 'glaciers',  name: 'Glaciers',   primary: '#E0F0FF', secondary: '#4FC3F7', glow: '#00B0FF', accent: '#B3E5FC', logo: '', spriteSheet: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663489271487/bLh3StKHGXUj5K9umHEgwQ/sprites_glaciers_a58b4f7d.png' },
+  blueclaws: { id: 'blueclaws', name: 'Blue Claws', primary: '#0D47A1', secondary: '#1565C0', glow: '#2196F3', accent: '#64B5F6', logo: '', spriteSheet: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663489271487/bLh3StKHGXUj5K9umHEgwQ/sprites_blueclaws_92191e34.png' },
+  nightraid: { id: 'nightraid', name: 'Night Raid', primary: '#1A0033', secondary: '#7B1FA2', glow: '#CE93D8', accent: '#4A148C', logo: '', spriteSheet: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663489271487/bLh3StKHGXUj5K9umHEgwQ/sprites_nightraid_3494c7e4.png' },
+  seawolves: { id: 'seawolves', name: 'Seawolves',  primary: '#004D40', secondary: '#26A69A', glow: '#00BFA5', accent: '#80CBC4', logo: '', spriteSheet: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663489271487/bLh3StKHGXUj5K9umHEgwQ/sprites_seawolves_f264a8a2.png' },
+  rebellion: { id: 'rebellion', name: 'Rebellion',  primary: '#4A0000', secondary: '#D32F2F', glow: '#FF1744', accent: '#B71C1C', logo: '', spriteSheet: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663489271487/bLh3StKHGXUj5K9umHEgwQ/sprites_rebellion_3a0d21be.png' },
+  railers:   { id: 'railers',   name: 'Railers',    primary: '#37474F', secondary: '#90A4AE', glow: '#CFD8DC', accent: '#263238', logo: '', spriteSheet: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663489271487/bLh3StKHGXUj5K9umHEgwQ/sprites_railers_542bcd8e.png' },
+  havoc:     { id: 'havoc',     name: 'Havoc',      primary: '#1a1a1a', secondary: '#FFD600', glow: '#FFEA00', accent: '#FFC107', logo: '', spriteSheet: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663489271487/bLh3StKHGXUj5K9umHEgwQ/sprites_havoc_b97e02d0.png' },
+  wrath:     { id: 'wrath',     name: 'Wrath',      primary: '#3E2723', secondary: '#8B0000', glow: '#D50000', accent: '#4E342E', logo: '', spriteSheet: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663489271487/bLh3StKHGXUj5K9umHEgwQ/sprites_wrath_4cc01f76.png' },
+  sizzle:    { id: 'sizzle',    name: 'Sizzle',     primary: '#880E4F', secondary: '#E91E63', glow: '#FF4081', accent: '#F48FB1', logo: '', spriteSheet: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663489271487/bLh3StKHGXUj5K9umHEgwQ/sprites_sizzle_b776a61f.png' },
+  hoppers:   { id: 'hoppers',   name: 'Hoppers',    primary: '#1B5E20', secondary: '#76FF03', glow: '#64DD17', accent: '#CCFF90', logo: '', spriteSheet: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663489271487/bLh3StKHGXUj5K9umHEgwQ/sprites_hoppers_5d589a7a.png' },
+  gauchos:   { id: 'gauchos',   name: 'Gauchos',    primary: '#4E342E', secondary: '#D4A574', glow: '#FFB74D', accent: '#8D6E63', logo: '', spriteSheet: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663489271487/bLh3StKHGXUj5K9umHEgwQ/sprites_gauchos_83fa74a7.png' },
+  engineers: { id: 'engineers', name: 'Engineers',  primary: '#BF360C', secondary: '#FF6D00', glow: '#FF9100', accent: '#E65100', logo: '', spriteSheet: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663489271487/bLh3StKHGXUj5K9umHEgwQ/sprites_engineers_e7f80c7a.png' },
 };
 
 export interface Vec2 { x: number; y: number; }
 
 export const PLAYER_NAMES: Record<string, string[]> = {
-  inferno: ['BLAZE', 'TORCH', 'EMBER'],
-  vortex: ['STORM', 'SURGE', 'DRIFT'],
-  empire: ['CROWN', 'REIGN', 'NOBLE'],
-  sledge: ['STEEL', 'IRON', 'BOLT'],
+  inferno:   ['BLAZE', 'TORCH', 'EMBER'],
+  vortex:    ['STORM', 'SURGE', 'DRIFT'],
+  empire:    ['CROWN', 'REIGN', 'NOBLE'],
+  sledge:    ['STEEL', 'IRON', 'BOLT'],
+  glaciers:  ['FROST', 'CHILL', 'SLEET'],
+  blueclaws: ['TIDE', 'REEF', 'CORAL'],
+  nightraid: ['SHADE', 'PHANTOM', 'DUSK'],
+  seawolves: ['WAVE', 'ANCHOR', 'DEPTH'],
+  rebellion: ['RIOT', 'FURY', 'ROGUE'],
+  railers:   ['SPIKE', 'RAIL', 'GAUGE'],
+  havoc:     ['CHAOS', 'WRECK', 'BLAST'],
+  wrath:     ['RAGE', 'SCORN', 'DOOM'],
+  sizzle:    ['FLASH', 'SPARK', 'FLARE'],
+  hoppers:   ['LEAP', 'SPRING', 'BOUNCE'],
+  gauchos:   ['LASSO', 'BRONCO', 'RIDER'],
+  engineers: ['FORGE', 'WELD', 'RIVET'],
 };
 
 export interface PlayerState {
@@ -438,12 +472,15 @@ export interface GameState {
   speedLines: number;
   screenFlash: number;
   screenFlashColor: string;
+  // Net physics & LED backboard
+  netDeform: { side: 'left' | 'right'; intensity: number; timer: number } | null;
+  ledFlash: { side: 'left' | 'right'; color: string; intensity: number; timer: number } | null;
 }
 
 export const ASSET_URLS = {
   menuBg: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663476839256/L959pTVNCfBxbsJyQ7g7yz/pyroball_menu_bg-a9ADXr7JLSw9S3yYRQALrW.webp',
-  arenaBg: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663476839256/L959pTVNCfBxbsJyQ7g7yz/pyroball_arena_bg-ankZeiYwyw9qRgkFpwuWbZ.webp',
+  arenaBg: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663489271487/bLh3StKHGXUj5K9umHEgwQ/pyroball_arena_v2-eKgNHPvNfDWDF6TdKjF75M.webp',
   fireball: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663476839256/L959pTVNCfBxbsJyQ7g7yz/pyroball_fireball-E9tvDuBzFBX857r47XAGv2.webp',
   courtTexture: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663476839256/L959pTVNCfBxbsJyQ7g7yz/pyroball_court_texture-gK5TRuoWCeFughgBycJaaZ.webp',
-  arenaHQ: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663476839256/L959pTVNCfBxbsJyQ7g7yz/pyroball-arena-apa-N98nMAKFxq9yoCS9XaN95v.webp',
+  arenaHQ: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663489271487/bLh3StKHGXUj5K9umHEgwQ/pyroball_arena_v2-eKgNHPvNfDWDF6TdKjF75M.webp',
 } as const;

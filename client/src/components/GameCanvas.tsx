@@ -32,12 +32,13 @@ const CANVAS_H = 540;
 //   game y=500 (near sideline)   → image BOTTOM-RIGHT edge
 
 const FIELD = {
-  // Far edge (gy=0, top/left of image — further from camera)
-  farLeft:   { x: 148, y: 192 },   // gx=0, gy=0   (top-left corner of court)
-  farRight:  { x: 775, y: 138 },   // gx=900, gy=0 (top-right corner — HIGHER)
-  // Near edge (gy=500, bottom/right of image — closer to camera)
-  nearLeft:  { x: 82,  y: 428 },   // gx=0, gy=500 (bottom-left corner)
-  nearRight: { x: 862, y: 348 },   // gx=900, gy=500 (bottom-right — HIGHER than nearLeft)
+  // Far edge (gy=0, top of field — further from camera)
+  // Arena v2: symmetric front-facing camera, field wider at bottom
+  farLeft:   { x: 198, y: 205 },   // gx=0, gy=0   (top-left corner of court)
+  farRight:  { x: 762, y: 205 },   // gx=900, gy=0 (top-right corner — same height, symmetric)
+  // Near edge (gy=500, bottom of field — closer to camera)
+  nearLeft:  { x: 118, y: 375 },   // gx=0, gy=500 (bottom-left corner)
+  nearRight: { x: 842, y: 375 },   // gx=900, gy=500 (bottom-right — same height, symmetric)
 };
 
 // --- Build field clipping path (quadrilateral) ---
@@ -126,41 +127,38 @@ function lerpColor(a: string, b: string, t: number): string {
 }
 
 // ============================================================
-// SPRITE SYSTEM — Preloaded team sprites for 5 poses
+// SPRITE SHEET SYSTEM — Single sheet per team with 3 rows x 4 cols
+// Row 0: IDLE (4 frames), Row 1: RUNNING (4 frames), Row 2: SHOOTING (4 frames)
+// Sheet size: 2752x1536 -> each cell: 688x512
 // ============================================================
-type Pose = 'idle' | 'running' | 'shooting' | 'jumping' | 'spinning';
-const POSES: Pose[] = ['idle', 'running', 'shooting', 'jumping', 'spinning'];
-const SPRITE_TEAMS = ['inferno', 'vortex', 'empire', 'sledge'];
+type Pose = 'idle' | 'running' | 'shooting';
+const POSE_ROW: Record<Pose, number> = { idle: 0, running: 1, shooting: 2 };
+const SPRITE_COLS = 4;
+const SPRITE_ROWS = 3;
 
-// Sprite cache: teamId -> pose -> HTMLImageElement
-const spriteCache: Record<string, Record<string, HTMLImageElement>> = {};
-const spritesLoaded: Record<string, boolean> = {};
+// Sprite sheet cache: teamId -> HTMLImageElement
+const sheetCache: Record<string, HTMLImageElement> = {};
+const sheetsLoaded: Record<string, boolean> = {};
 
-function preloadSprites() {
-  SPRITE_TEAMS.forEach(team => {
-    spriteCache[team] = {};
-    let loaded = 0;
-    const total = POSES.length;
-    POSES.forEach(pose => {
-      const img = new Image();
-      img.src = `/sprites/${team}_${pose}.png`;
-      img.onload = () => {
-        loaded++;
-        if (loaded >= total) spritesLoaded[team] = true;
-      };
-      spriteCache[team][pose] = img;
-    });
+function preloadSpriteSheets() {
+  Object.values(TEAMS).forEach(team => {
+    if (!team.spriteSheet) return;
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = team.spriteSheet;
+    img.onload = () => { sheetsLoaded[team.id] = true; };
+    sheetCache[team.id] = img;
   });
 }
 
 // Call once at module load
-preloadSprites();
+preloadSpriteSheets();
 
 function getPlayerPose(p: PlayerState, gs: GameState): Pose {
-  // Priority: shooting > spinning > jumping > running > idle
-  if (gs.shotMeter.active && gs.shotMeter.playerId === p.id) return 'shooting';
-  if (p.isSpinning && p.spinTimer > 0) return 'spinning';
-  if (p.isJumping && p.jumpZ > 0.5) return 'jumping';
+  // Priority: shooting > running > idle (spinning/jumping use running frame)
+  if (gs.shotMeter?.active && gs.shotMeter.playerId === p.id) return 'shooting';
+  if (p.isSpinning && p.spinTimer > 0) return 'running';
+  if (p.isJumping && p.jumpZ > 0.5) return 'running';
   const speed = Math.sqrt(p.vel.x * p.vel.x + p.vel.y * p.vel.y);
   if (speed > 0.3) return 'running';
   return 'idle';
@@ -171,32 +169,128 @@ function getPlayerPose(p: PlayerState, gs: GameState): Pose {
 // ============================================================
 
 // ============================================================
-// DRAW GOALS — Goal structures are baked into the arena base image.
-// Only the goal-flash glow effect is drawn programmatically when a goal is scored.
+// DRAW GOALS — Goal flash glow + Net Physics + LED Backboard
 // ============================================================
 function drawGoals(ctx: CanvasRenderingContext2D, gs: GameState, frame: number) {
-  const isFlashing = gs.goalFlash > 0;
-  const flashIntensity = gs.goalFlash;
-  if (!isFlashing) return;
-
   const H = COURT.HEIGHT;
 
-  const drawGoalFlash = (goalX: number) => {
-    // Ground glow at the goal mouth
-    const gc = project(goalX, H / 2);
-    const gr = 120 * gc.scale;
-    const gGrad = ctx.createRadialGradient(gc.x, gc.y, 0, gc.x, gc.y, gr);
-    gGrad.addColorStop(0, `rgba(255, 200, 50, ${flashIntensity * 0.5})`);
-    gGrad.addColorStop(0.4, `rgba(255, 150, 0, ${flashIntensity * 0.25})`);
-    gGrad.addColorStop(1, 'rgba(255, 200, 50, 0)');
-    ctx.fillStyle = gGrad;
-    ctx.beginPath();
-    ctx.arc(gc.x, gc.y, gr, 0, Math.PI * 2);
-    ctx.fill();
-  };
+  // --- Goal flash glow (ground) ---
+  if (gs.goalFlash > 0) {
+    const flashIntensity = gs.goalFlash;
+    const drawGoalFlash = (goalX: number) => {
+      const gc = project(goalX, H / 2);
+      const gr = 120 * gc.scale;
+      const gGrad = ctx.createRadialGradient(gc.x, gc.y, 0, gc.x, gc.y, gr);
+      gGrad.addColorStop(0, `rgba(255, 200, 50, ${flashIntensity * 0.5})`);
+      gGrad.addColorStop(0.4, `rgba(255, 150, 0, ${flashIntensity * 0.25})`);
+      gGrad.addColorStop(1, 'rgba(255, 200, 50, 0)');
+      ctx.fillStyle = gGrad;
+      ctx.beginPath();
+      ctx.arc(gc.x, gc.y, gr, 0, Math.PI * 2);
+      ctx.fill();
+    };
+    drawGoalFlash(0);
+    drawGoalFlash(COURT.WIDTH);
+  }
 
-  drawGoalFlash(0);
-  drawGoalFlash(COURT.WIDTH);
+  // --- NET PHYSICS: Mesh deformation when ball hits net ---
+  if (gs.netDeform) {
+    const nd = gs.netDeform;
+    const goalX = nd.side === 'left' ? 0 : COURT.WIDTH;
+    const goalCenter = project(goalX, H / 2);
+    const s = goalCenter.scale;
+    const intensity = nd.intensity;
+    const wobble = Math.sin(frame * 0.4) * intensity * 0.3;
+
+    // Draw net mesh lines that bulge outward
+    ctx.save();
+    const netW = 60 * s;  // net width on screen
+    const netH = 40 * s;  // net height on screen
+    const bulge = intensity * 25 * s * (1 + wobble);
+    const netX = goalCenter.x + (nd.side === 'left' ? -netW : 0);
+    const netY = goalCenter.y - netH;
+
+    // Horizontal net lines (4 lines)
+    for (let row = 0; row < 4; row++) {
+      const t = row / 3;
+      const y = netY + t * netH * 2;
+      const rowBulge = bulge * Math.sin(t * Math.PI) * (0.5 + Math.sin(frame * 0.3 + row) * 0.2);
+      ctx.beginPath();
+      ctx.moveTo(netX, y);
+      const cpX = nd.side === 'left' ? netX - rowBulge : netX + netW + rowBulge;
+      ctx.quadraticCurveTo(cpX, y, netX + netW, y);
+      ctx.strokeStyle = `rgba(255, 255, 255, ${0.15 + intensity * 0.25})`;
+      ctx.lineWidth = 1 * s;
+      ctx.stroke();
+    }
+
+    // Vertical net lines (5 lines)
+    for (let col = 0; col < 5; col++) {
+      const t = col / 4;
+      const x = netX + t * netW;
+      const colBulge = bulge * Math.sin(t * Math.PI) * (0.6 + Math.cos(frame * 0.25 + col) * 0.15);
+      ctx.beginPath();
+      ctx.moveTo(x, netY);
+      const cpY = netY + netH;
+      const cpX = nd.side === 'left' ? x - colBulge : x + colBulge;
+      ctx.quadraticCurveTo(cpX, cpY, x, netY + netH * 2);
+      ctx.strokeStyle = `rgba(255, 255, 255, ${0.12 + intensity * 0.2})`;
+      ctx.lineWidth = 1 * s;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // --- LED BACKBOARD FLASH ---
+  if (gs.ledFlash) {
+    const lf = gs.ledFlash;
+    const goalX = lf.side === 'left' ? 0 : COURT.WIDTH;
+    const goalTop = project(goalX, H / 2 - GOAL.WIDTH / 2);
+    const goalBot = project(goalX, H / 2 + GOAL.WIDTH / 2);
+    const s = goalTop.scale;
+
+    ctx.save();
+    // Backboard glow rectangle above the goal
+    const bbH = 18 * s; // backboard height on screen
+    const bbY = Math.min(goalTop.y, goalBot.y) - bbH - 5 * s;
+    const bbX = Math.min(goalTop.x, goalBot.x) - 10 * s;
+    const bbW = Math.abs(goalTop.x - goalBot.x) + 20 * s;
+
+    // Pulsing strobe effect
+    const pulse = (Math.sin(frame * 0.8) * 0.3 + 0.7) * lf.intensity;
+    const color = lf.color;
+
+    // Parse hex color for rgba
+    const r = parseInt(color.slice(1, 3), 16);
+    const g = parseInt(color.slice(3, 5), 16);
+    const b = parseInt(color.slice(5, 7), 16);
+
+    // Outer glow
+    const glowGrad = ctx.createRadialGradient(
+      bbX + bbW / 2, bbY + bbH / 2, 0,
+      bbX + bbW / 2, bbY + bbH / 2, bbW * 0.8
+    );
+    glowGrad.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${pulse * 0.4})`);
+    glowGrad.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, ${pulse * 0.15})`);
+    glowGrad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+    ctx.fillStyle = glowGrad;
+    ctx.fillRect(bbX - bbW * 0.3, bbY - bbH * 2, bbW * 1.6, bbH * 5);
+
+    // LED panel itself
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${pulse * 0.7})`;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 20 * pulse;
+    ctx.beginPath();
+    ctx.roundRect(bbX, bbY, bbW, bbH, 3 * s);
+    ctx.fill();
+
+    // Inner bright strip
+    ctx.fillStyle = `rgba(255, 255, 255, ${pulse * 0.4})`;
+    ctx.shadowBlur = 0;
+    ctx.fillRect(bbX + 2 * s, bbY + bbH * 0.3, bbW - 4 * s, bbH * 0.4);
+
+    ctx.restore();
+  }
 }
 
 // ============================================================
@@ -239,11 +333,10 @@ function drawPlayer(ctx: CanvasRenderingContext2D, p: PlayerState, team: TeamDat
   ctx.fill();
   ctx.restore();
 
-  // ---- SPRITE RENDERING ----
+  // ---- SPRITE SHEET RENDERING ----
   const pose = getPlayerPose(p, gs);
-  const teamSprites = spriteCache[p.teamId];
-  const spriteImg = teamSprites ? teamSprites[pose] : null;
-  const spriteReady = spriteImg && spriteImg.complete && spriteImg.naturalWidth > 0;
+  const sheet = sheetCache[p.teamId];
+  const sheetReady = sheet && sheet.complete && sheet.naturalWidth > 0;
 
   // Determine facing direction (flip sprite if facing left)
   let facingLeft = false;
@@ -253,21 +346,39 @@ function drawPlayer(ctx: CanvasRenderingContext2D, p: PlayerState, team: TeamDat
     facingLeft = p.id >= 3; // Away team faces left by default
   }
 
+  // Sprite sheet frame selection
+  const row = POSE_ROW[pose];
+  const animFrame = Math.floor(frame * 0.15 + p.id * 1.3) % SPRITE_COLS;
+  const cellW = sheetReady ? sheet.naturalWidth / SPRITE_COLS : 688;
+  const cellH = sheetReady ? sheet.naturalHeight / SPRITE_ROWS : 512;
+  const srcX = animFrame * cellW;
+  const srcY = row * cellH;
+
   // Sprite dimensions — scale to match the perspective
   const SPRITE_DRAW_H = 45 * s; // Total height of the sprite on screen
-  const spriteAspect = spriteReady ? spriteImg!.naturalWidth / spriteImg!.naturalHeight : 0.745;
+  const spriteAspect = cellW / cellH;
   const SPRITE_DRAW_W = SPRITE_DRAW_H * spriteAspect;
 
   // Animation: subtle bob when running (reduced to prevent floating)
   const runPhase = frame * 0.22 + p.id * 1.7;
   const bodyBob = isMoving ? Math.abs(Math.sin(runPhase)) * 0.8 * s : 0;
 
+  // IDLE ANIMATIONS - Make players feel alive when standing still
+  const idlePhase = frame * 0.03 + p.id * 0.5; // Slow, gentle animation
+  const idleBob = !isMoving ? Math.sin(idlePhase) * 0.6 * s : 0; // Gentle vertical bobbing
+  const idleSway = !isMoving ? Math.sin(idlePhase * 0.7) * 1.2 * s : 0; // Weight shifting
+  const idleBreath = !isMoving ? (Math.sin(idlePhase * 0.5) * 0.015 + 0.985) : 1; // Breathing
+
   // Draw the sprite (properly grounded to shadow)
   ctx.save();
-  const drawX = sx;
-  const drawY = sy - bodyBob - jumpOffset - 2 * s; // Anchor sprite to ground shadow
+  const drawX = sx + idleSway; // Add idle sway to horizontal position
+  const drawY = sy - bodyBob - jumpOffset - idleBob - 2 * s; // Anchor sprite + idle bob
 
   ctx.translate(drawX, drawY);
+  
+  // Apply idle breathing scale
+  ctx.scale(idleBreath, idleBreath);
+  ctx.translate(-drawX + sx + idleSway, -drawY + sy - bodyBob - jumpOffset - idleBob - 2 * s);
 
   // Spin rotation
   if (p.isSpinning) {
@@ -279,17 +390,18 @@ function drawPlayer(ctx: CanvasRenderingContext2D, p: PlayerState, team: TeamDat
     ctx.scale(-1, 1);
   }
 
-  if (spriteReady) {
-    // Draw sprite centered horizontally, with feet at the anchor point
+  if (sheetReady) {
+    // Draw sprite from sheet using source rectangle clipping
     ctx.drawImage(
-      spriteImg!,
+      sheet,
+      srcX, srcY, cellW, cellH,  // source rectangle from sprite sheet
       -SPRITE_DRAW_W / 2,
       -SPRITE_DRAW_H + 4 * s, // offset so feet touch the ground shadow
       SPRITE_DRAW_W,
       SPRITE_DRAW_H
     );
   } else {
-    // Fallback: simple circle if sprites haven't loaded yet
+    // Fallback: simple circle if sprite sheet hasn't loaded yet
     ctx.beginPath();
     ctx.arc(0, -visR, visR, 0, Math.PI * 2);
     ctx.fillStyle = team.primary;
@@ -299,7 +411,7 @@ function drawPlayer(ctx: CanvasRenderingContext2D, p: PlayerState, team: TeamDat
     ctx.stroke();
   }
 
-  ctx.restore(); // undo translate/flip/spin
+  ctx.restore(); // undo translate/flip/spin/scale
 
   // ---- LEGACY BODY CODE REMOVED — replaced by sprites above ----
   // The old procedural body (legs, torso, arms, helmet) is no longer drawn.

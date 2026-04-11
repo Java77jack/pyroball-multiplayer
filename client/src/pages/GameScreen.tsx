@@ -189,38 +189,7 @@ export default function GameScreen() {
         <GameCanvas gameState={gameState} />
       </div>
 
-      {/* Controls */}
-      <div className="relative z-10 flex items-end justify-between px-4 pb-4 pt-1" style={{ minHeight: 140 }}>
-        <Joystick onMove={setJoystick} />
-        <ActionButtons
-          hasBall={hasBall}
-          fireReady={fireReady}
-          onShootStart={handleShootStart}
-          onShootRelease={handleShootRelease}
-          onPass={handlePass}
-          onSteal={handleSteal}
-          onSwitch={handleSwitch}
-          onJump={handleJump}
-          onSpin={handleSpin}
-        />
-      </div>
-
-      {/* Desktop keyboard hint / gamepad indicator */}
-      <div className="hidden md:block fixed bottom-2 left-1/2 -translate-x-1/2 z-40">
-        {gamepadConnected ? (
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full" style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}>
-            <span style={{ fontSize: 11 }}>🎮</span>
-            <span className="text-white/50 text-[10px]" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-              Controller: A=Shoot · B=Pass · X=Steal · Y=Jump · LB=Spin · RB=Switch
-            </span>
-            <span className="text-green-400 text-[9px] font-bold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>CONNECTED</span>
-          </div>
-        ) : (
-          <div className="text-white/20 text-[10px] text-center" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-            WASD: Move | HOLD J: Shoot (🔥 = Power Shot when FIRE is full) | K: Pass | L: Steal | Tab: Switch | Q: Jump | E: Spin
-          </div>
-        )}
-      </div>
+      {/* Controls hidden - keyboard/gamepad only */}
     </div>
   );
 }

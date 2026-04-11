@@ -295,7 +295,7 @@ export default function PracticeGame() {
                 className="h-full rounded-full"
                 style={{ background: `linear-gradient(90deg, ${drill.color}, ${drill.glow.replace('0.6', '1')})` }}
                 animate={{ width: `${(drillProgress.completed / drillProgress.target) * 100}%` }}
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
               />
             </div>
 
@@ -413,7 +413,7 @@ export default function PracticeGame() {
               className="flex flex-col items-center gap-6 max-w-md w-full px-6"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+              transition={{ delay: 0.2, duration: 0.4, ease: 'easeOut' }}
             >
               {/* Grade */}
               <div className="text-center">
