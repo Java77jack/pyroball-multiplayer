@@ -186,3 +186,32 @@
 - [x] Verify GoalEvent type compatibility
 - [x] Test compilation and fix any issues
 - [x] Write vitest for season engine (34 tests passing)
+
+## Sprite Rendering Fix
+- [ ] Fix players appearing as cropped rectangular images instead of proper sprites
+- [ ] Remove sprite sheet backgrounds so characters render with transparency
+- [ ] Ensure proper sprite scaling and positioning on the field
+
+## Canvas-Drawn Vector Players (Option A)
+- [x] Build PlayerRenderer module with team-colored vector characters
+- [x] Implement idle animation cycle (breathing/weight shift)
+- [x] Implement run animation cycle (legs pumping, arms swinging)
+- [x] Implement jump animation cycle
+- [x] Implement shoot animation cycle (wind-up, release)
+- [x] Implement pass animation cycle
+- [x] Implement catch animation cycle
+- [x] Dynamic team color application (jersey, helmet, shorts)
+- [x] Player number rendering on jersey
+- [x] Integrate into GameCanvas replacing sprite sheet drawPlayer
+- [ ] Verify all animations look smooth during gameplay
+
+## Gamepad Support for All Screens
+- [x] Audit current gamepad support (which screens have it, which don't)
+- [x] Add gamepad navigation to Home menu screen (already existed)
+- [x] Add gamepad navigation to Team Select screen (already existed)
+- [x] Add gamepad navigation to Season Hub screen
+- [x] Add gamepad navigation to VS Screen (skip with A/Enter/click)
+- [x] Add gamepad navigation to Match Results screen (already existed)
+- [x] Add gamepad navigation to How To Play screen (already existed)
+- [x] Ensure gamepad works in-game (already exists - verified)
+- [x] Write vitest for gamepad navigation hook (20 tests passing)

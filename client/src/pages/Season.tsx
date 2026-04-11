@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useGameContext, type Difficulty } from '@/contexts/GameContext';
 import { TEAMS } from '@/lib/gameConstants';
@@ -14,6 +14,7 @@ import {
   type PlayoffBracketGame,
 } from '@/lib/season';
 import { initAudio, playMenuSelect } from '@/lib/soundEngine';
+import { useMenuGamepad } from '@/hooks/useMenuGamepad';
 
 const DIFFICULTIES: Difficulty[] = ['rookie', 'pro', 'allstar'];
 
@@ -91,6 +92,198 @@ export default function Season() {
     clearSeason();
   };
 
+  // ============================================================
+  // GAMEPAD NAVIGATION
+  // ============================================================
+  // Pre-season: navigate team grid (16 teams, 3 columns) + difficulty (3 items) + create button (1)
+  // Active season: navigate action buttons (Play Next / Reset / Back)
+  //
+  // We use a single linear focus index and map it to the correct section.
+
+  const [focusIdx, setFocusIdx] = useState(0);
+
+  // Pre-season layout:
+  //   Items 0..15 = team grid (3 columns)
+  //   Items 16..18 = difficulty options
+  //   Item 19 = Create Season button
+  //   Item 20 = Back to Main Menu
+  const PRE_SEASON_TEAM_COUNT = teamEntries.length; // 16
+  const PRE_SEASON_TOTAL = PRE_SEASON_TEAM_COUNT + DIFFICULTIES.length + 1 + 1; // 16 + 3 + 1 + 1 = 21
+
+  // Active season layout:
+  //   Item 0 = Play Next Match (or nothing if season complete)
+  //   Item 1 = Reset Season
+  //   Item 2 = Back to Main Menu
+  const activeSeasonItems = currentFixture ? 3 : 2; // no "Play Next" if season complete
+
+  const totalItems = !season ? PRE_SEASON_TOTAL : activeSeasonItems;
+
+  // Clamp focus when switching modes
+  useEffect(() => {
+    setFocusIdx(0);
+  }, [!!season]);
+
+  const handleGamepadSelect = useCallback((idx: number) => {
+    if (!season) {
+      // Pre-season
+      if (idx < PRE_SEASON_TEAM_COUNT) {
+        // Select team
+        const teamId = teamEntries[idx][0];
+        playMenuSelect();
+        setSelectedTeam(teamId);
+      } else if (idx < PRE_SEASON_TEAM_COUNT + DIFFICULTIES.length) {
+        // Select difficulty
+        const di = idx - PRE_SEASON_TEAM_COUNT;
+        playMenuSelect();
+        setSelectedDifficulty(DIFFICULTIES[di]);
+      } else if (idx === PRE_SEASON_TEAM_COUNT + DIFFICULTIES.length) {
+        // Create Season
+        handleCreateSeason();
+      } else {
+        // Back
+        handleBack();
+      }
+    } else {
+      // Active season
+      if (currentFixture) {
+        if (idx === 0) handlePlayNextMatch();
+        else if (idx === 1) handleReset();
+        else handleBack();
+      } else {
+        if (idx === 0) handleReset();
+        else handleBack();
+      }
+    }
+  }, [season, selectedTeam, selectedDifficulty, currentFixture, teamEntries]);
+
+  const handleGamepadNavigate = useCallback((idx: number) => {
+    setFocusIdx(idx);
+    if (!season) {
+      // Sync team/difficulty selection as user navigates
+      if (idx < PRE_SEASON_TEAM_COUNT) {
+        setSelectedTeam(teamEntries[idx][0]);
+      } else if (idx < PRE_SEASON_TEAM_COUNT + DIFFICULTIES.length) {
+        setSelectedDifficulty(DIFFICULTIES[idx - PRE_SEASON_TEAM_COUNT]);
+      }
+    }
+  }, [season, teamEntries]);
+
+  // Custom gamepad navigation with section-aware up/down for the pre-season grid
+  // We need to handle the grid → difficulty → button transitions manually
+  useEffect(() => {
+    if (season) return; // Active season uses simple list via useMenuGamepad below
+
+    const NAV_COOLDOWN = 180;
+    const DEAD = 0.4;
+    const prevButtons: { current: boolean[] } = { current: [] };
+    const prevAxes: { current: number[] } = { current: [] };
+    const lastNav: { current: number } = { current: 0 };
+    let rafId = 0;
+
+    const poll = () => {
+      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+      let gp: Gamepad | null = null;
+      for (const g of gamepads) { if (g && g.connected) { gp = g; break; } }
+
+      if (gp) {
+        const buttons = gp.buttons.map(b => b.pressed);
+        const axes = gp.axes.slice(0, 4);
+        const prev = prevButtons.current;
+        const now = performance.now();
+        const justPressed = (i: number) => buttons[i] && !prev[i];
+
+        // A = confirm
+        if (justPressed(0)) {
+          handleGamepadSelect(focusIdx);
+        }
+
+        // B = back
+        if (justPressed(1)) {
+          handleBack();
+        }
+
+        // Navigation
+        const canNav = now - lastNav.current > NAV_COOLDOWN;
+        if (canNav) {
+          const dUp = buttons[12]; const dDown = buttons[13];
+          const dLeft = buttons[14]; const dRight = buttons[15];
+          const lx = axes[0] ?? 0; const ly = axes[1] ?? 0;
+          const stickUp = ly < -DEAD; const stickDown = ly > DEAD;
+          const stickLeft = lx < -DEAD; const stickRight = lx > DEAD;
+
+          const pLx = prevAxes.current[0] ?? 0; const pLy = prevAxes.current[1] ?? 0;
+          const newUp = (dUp && !prev[12]) || (stickUp && !(pLy < -DEAD));
+          const newDown = (dDown && !prev[13]) || (stickDown && !(pLy > DEAD));
+          const newLeft = (dLeft && !prev[14]) || (stickLeft && !(pLx < -DEAD));
+          const newRight = (dRight && !prev[15]) || (stickRight && !(pLx > DEAD));
+
+          let newIdx = focusIdx;
+          const COLS = 3;
+
+          if (focusIdx < PRE_SEASON_TEAM_COUNT) {
+            // In team grid
+            if (newLeft) newIdx = Math.max(0, focusIdx - 1);
+            else if (newRight) newIdx = Math.min(PRE_SEASON_TEAM_COUNT - 1, focusIdx + 1);
+            else if (newUp) {
+              const above = focusIdx - COLS;
+              newIdx = above >= 0 ? above : focusIdx;
+            }
+            else if (newDown) {
+              const below = focusIdx + COLS;
+              newIdx = below < PRE_SEASON_TEAM_COUNT ? below : PRE_SEASON_TEAM_COUNT; // jump to difficulty
+            }
+          } else if (focusIdx < PRE_SEASON_TEAM_COUNT + DIFFICULTIES.length) {
+            // In difficulty row
+            const di = focusIdx - PRE_SEASON_TEAM_COUNT;
+            if (newLeft) newIdx = di > 0 ? focusIdx - 1 : focusIdx;
+            else if (newRight) newIdx = di < DIFFICULTIES.length - 1 ? focusIdx + 1 : focusIdx;
+            else if (newUp) {
+              // Jump back to last row of team grid
+              const lastRowStart = Math.floor((PRE_SEASON_TEAM_COUNT - 1) / COLS) * COLS;
+              newIdx = Math.min(lastRowStart + di, PRE_SEASON_TEAM_COUNT - 1);
+            }
+            else if (newDown) newIdx = PRE_SEASON_TEAM_COUNT + DIFFICULTIES.length; // Create Season
+          } else if (focusIdx === PRE_SEASON_TEAM_COUNT + DIFFICULTIES.length) {
+            // Create Season button
+            if (newUp) newIdx = PRE_SEASON_TEAM_COUNT + 1; // middle difficulty
+            else if (newDown) newIdx = PRE_SEASON_TEAM_COUNT + DIFFICULTIES.length + 1; // Back
+          } else {
+            // Back button
+            if (newUp) newIdx = PRE_SEASON_TEAM_COUNT + DIFFICULTIES.length; // Create Season
+          }
+
+          if (newIdx !== focusIdx) {
+            lastNav.current = now;
+            handleGamepadNavigate(newIdx);
+          }
+        }
+
+        prevButtons.current = buttons;
+        prevAxes.current = axes;
+      }
+
+      rafId = requestAnimationFrame(poll);
+    };
+
+    rafId = requestAnimationFrame(poll);
+    return () => cancelAnimationFrame(rafId);
+  }, [season, focusIdx, handleGamepadSelect, handleGamepadNavigate]);
+
+  // Active season: simple vertical list navigation
+  useMenuGamepad({
+    itemCount: season ? activeSeasonItems : 0, // disabled when pre-season (handled above)
+    selectedIndex: focusIdx,
+    onSelect: handleGamepadSelect,
+    onNavigate: setFocusIdx,
+    onBack: handleBack,
+  });
+
+  // Helper: is this team grid item focused?
+  const isTeamFocused = (idx: number) => !season && focusIdx === idx;
+  const isDiffFocused = (di: number) => !season && focusIdx === PRE_SEASON_TEAM_COUNT + di;
+  const isCreateFocused = !season && focusIdx === PRE_SEASON_TEAM_COUNT + DIFFICULTIES.length;
+  const isBackFocused = !season && focusIdx === PRE_SEASON_TEAM_COUNT + DIFFICULTIES.length + 1;
+
   return (
     <div className="min-h-screen w-full bg-[#050510] px-4 py-6 text-white md:px-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
@@ -107,7 +300,14 @@ export default function Season() {
 
           <button
             onClick={handleBack}
-            className="rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-bold tracking-wider text-white/80 transition hover:bg-white/10"
+            className="rounded-lg border px-4 py-2 text-sm font-bold tracking-wider transition hover:bg-white/10"
+            style={{
+              borderColor: (!season && isBackFocused) || (season && focusIdx === (currentFixture ? 2 : 1))
+                ? 'rgba(255,180,0,0.8)' : 'rgba(255,255,255,0.15)',
+              background: (!season && isBackFocused) || (season && focusIdx === (currentFixture ? 2 : 1))
+                ? 'rgba(255,180,0,0.15)' : 'rgba(255,255,255,0.05)',
+              color: 'rgba(255,255,255,0.8)',
+            }}
           >
             Back to Main Menu
           </button>
@@ -127,19 +327,28 @@ export default function Season() {
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {teamEntries.map(([teamId, team]) => {
+                {teamEntries.map(([teamId, team], idx) => {
                   const isSelected = teamId === selectedTeam;
+                  const isFocused = isTeamFocused(idx);
                   return (
                     <button
                       key={teamId}
-                      onClick={() => setSelectedTeam(teamId)}
+                      onClick={() => { playMenuSelect(); setSelectedTeam(teamId); setFocusIdx(idx); }}
                       className="rounded-xl border px-4 py-4 text-left transition"
                       style={{
-                        borderColor: isSelected ? 'rgba(255,130,0,0.75)' : 'rgba(255,255,255,0.08)',
+                        borderColor: isFocused
+                          ? 'rgba(255,220,0,0.9)'
+                          : isSelected ? 'rgba(255,130,0,0.75)' : 'rgba(255,255,255,0.08)',
                         background: isSelected
                           ? 'linear-gradient(135deg, rgba(255,110,0,0.18), rgba(255,170,0,0.08))'
-                          : 'rgba(255,255,255,0.03)',
-                        boxShadow: isSelected ? '0 0 30px rgba(255,110,0,0.18)' : 'none',
+                          : isFocused
+                            ? 'rgba(255,200,0,0.08)'
+                            : 'rgba(255,255,255,0.03)',
+                        boxShadow: isFocused
+                          ? '0 0 20px rgba(255,200,0,0.25)'
+                          : isSelected ? '0 0 30px rgba(255,110,0,0.18)' : 'none',
+                        outline: isFocused ? '2px solid rgba(255,220,0,0.6)' : 'none',
+                        outlineOffset: 2,
                       }}
                     >
                       <div className="flex items-center justify-between gap-3">
@@ -160,17 +369,22 @@ export default function Season() {
               </p>
 
               <div className="mt-6 grid gap-3">
-                {DIFFICULTIES.map((value) => {
+                {DIFFICULTIES.map((value, di) => {
                   const isSelected = value === selectedDifficulty;
+                  const isFocused = isDiffFocused(di);
                   return (
                     <button
                       key={value}
-                      onClick={() => setSelectedDifficulty(value)}
+                      onClick={() => { playMenuSelect(); setSelectedDifficulty(value); setFocusIdx(PRE_SEASON_TEAM_COUNT + di); }}
                       className="rounded-xl border px-4 py-3 text-left font-bold uppercase tracking-[0.25em] transition"
                       style={{
-                        borderColor: isSelected ? 'rgba(255,184,0,0.75)' : 'rgba(255,255,255,0.1)',
-                        background: isSelected ? 'rgba(255,184,0,0.14)' : 'rgba(255,255,255,0.03)',
+                        borderColor: isFocused
+                          ? 'rgba(255,220,0,0.9)'
+                          : isSelected ? 'rgba(255,184,0,0.75)' : 'rgba(255,255,255,0.1)',
+                        background: isSelected ? 'rgba(255,184,0,0.14)' : isFocused ? 'rgba(255,200,0,0.08)' : 'rgba(255,255,255,0.03)',
                         color: isSelected ? '#fff' : 'rgba(255,255,255,0.72)',
+                        outline: isFocused ? '2px solid rgba(255,220,0,0.6)' : 'none',
+                        outlineOffset: 2,
                       }}
                     >
                       {value}
@@ -188,8 +402,18 @@ export default function Season() {
 
               <button
                 onClick={handleCreateSeason}
-                className="mt-6 w-full rounded-xl bg-gradient-to-r from-orange-500 via-orange-400 to-amber-300 px-4 py-4 text-lg font-black uppercase tracking-[0.25em] text-black shadow-[0_0_40px_rgba(255,128,0,0.25)] transition hover:scale-[1.01]"
-                style={{ fontFamily: 'Rajdhani, sans-serif' }}
+                className="mt-6 w-full rounded-xl px-4 py-4 text-lg font-black uppercase tracking-[0.25em] text-black transition hover:scale-[1.01]"
+                style={{
+                  fontFamily: 'Rajdhani, sans-serif',
+                  background: isCreateFocused
+                    ? 'linear-gradient(to right, #ffd700, #ffaa00, #ff8800)'
+                    : 'linear-gradient(to right, #f97316, #fb923c, #fbbf24)',
+                  boxShadow: isCreateFocused
+                    ? '0 0 40px rgba(255,200,0,0.4)'
+                    : '0 0 40px rgba(255,128,0,0.25)',
+                  outline: isCreateFocused ? '3px solid rgba(255,220,0,0.8)' : 'none',
+                  outlineOffset: 2,
+                }}
               >
                 Create Season
               </button>
@@ -270,8 +494,18 @@ export default function Season() {
                       </p>
                       <button
                         onClick={handlePlayNextMatch}
-                        className="mt-4 rounded-xl bg-gradient-to-r from-orange-500 via-orange-400 to-amber-300 px-5 py-3 text-base font-black uppercase tracking-[0.25em] text-black transition hover:scale-[1.01]"
-                        style={{ fontFamily: 'Rajdhani, sans-serif' }}
+                        className="mt-4 rounded-xl px-5 py-3 text-base font-black uppercase tracking-[0.25em] text-black transition hover:scale-[1.01]"
+                        style={{
+                          fontFamily: 'Rajdhani, sans-serif',
+                          background: season && focusIdx === 0
+                            ? 'linear-gradient(to right, #ffd700, #ffaa00, #ff8800)'
+                            : 'linear-gradient(to right, #f97316, #fb923c, #fbbf24)',
+                          boxShadow: season && focusIdx === 0
+                            ? '0 0 30px rgba(255,200,0,0.4)'
+                            : 'none',
+                          outline: season && focusIdx === 0 ? '3px solid rgba(255,220,0,0.8)' : 'none',
+                          outlineOffset: 2,
+                        }}
                       >
                         Play Next Match
                       </button>
@@ -294,7 +528,16 @@ export default function Season() {
                 <div className="mt-4 flex flex-wrap gap-3">
                   <button
                     onClick={handleReset}
-                    className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-bold uppercase tracking-[0.25em] text-white/80 transition hover:bg-white/10"
+                    className="rounded-xl border px-4 py-2 text-sm font-bold uppercase tracking-[0.25em] transition hover:bg-white/10"
+                    style={{
+                      borderColor: season && focusIdx === (currentFixture ? 1 : 0)
+                        ? 'rgba(255,220,0,0.8)' : 'rgba(255,255,255,0.15)',
+                      background: season && focusIdx === (currentFixture ? 1 : 0)
+                        ? 'rgba(255,200,0,0.12)' : 'rgba(255,255,255,0.05)',
+                      color: 'rgba(255,255,255,0.8)',
+                      outline: season && focusIdx === (currentFixture ? 1 : 0) ? '2px solid rgba(255,220,0,0.6)' : 'none',
+                      outlineOffset: 2,
+                    }}
                   >
                     Reset Season
                   </button>
@@ -435,7 +678,7 @@ export default function Season() {
               </div>
 
               <div className="mt-4 overflow-hidden rounded-xl border border-white/10">
-                <div className="grid grid-cols-[56px,1.5fr,88px,88px,88px,88px] bg-white/8 px-3 py-3 text-xs font-bold uppercase tracking-[0.2em] text-white/45">
+                <div className="grid grid-cols-[56px,1.5fr,88px,88px,88px,88px] bg-white/5 px-3 py-3 text-xs font-bold uppercase tracking-[0.2em] text-white/50">
                   <span>Rank</span>
                   <span>Team</span>
                   <span>W-L-T</span>

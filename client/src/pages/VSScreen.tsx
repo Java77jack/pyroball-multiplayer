@@ -1,18 +1,24 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TEAMS, ASSET_URLS } from '@/lib/gameConstants';
 import { useGameContext } from '@/contexts/GameContext';
 import { playGoalHorn } from '@/lib/soundEngine';
-import { markUserInteraction } from '@/lib/musicEngine';
 
 export default function VSScreen() {
   const [, navigate] = useLocation();
   const { homeTeam, awayTeam } = useGameContext();
   const [phase, setPhase] = useState<'enter' | 'clash' | 'flash' | 'exit'>('enter');
+  const skippedRef = useRef(false);
 
   const home = TEAMS[homeTeam];
   const away = TEAMS[awayTeam];
+
+  const skipToGame = () => {
+    if (skippedRef.current) return;
+    skippedRef.current = true;
+    navigate('/game');
+  };
 
   useEffect(() => {
     // Phase timeline
@@ -22,13 +28,58 @@ export default function VSScreen() {
       try { playGoalHorn(); } catch {}
     }, 2000);  // White flash + VS ignites
     const t3 = setTimeout(() => setPhase('exit'), 3400);    // Start exit
-    const t4 = setTimeout(() => navigate('/game'), 3900);   // Navigate to game
+    const t4 = setTimeout(() => skipToGame(), 3900);   // Navigate to game
 
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
   }, [navigate]);
 
+  // Keyboard skip (Enter, Space, Escape)
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+        skipToGame();
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, []);
+
+  // Gamepad skip (A button or Start button)
+  useEffect(() => {
+    const prevButtons = { current: [] as boolean[] };
+    let rafId = 0;
+
+    const poll = () => {
+      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+      let gp: Gamepad | null = null;
+      for (const g of gamepads) { if (g && g.connected) { gp = g; break; } }
+
+      if (gp) {
+        const buttons = gp.buttons.map(b => b.pressed);
+        const prev = prevButtons.current;
+        const justPressed = (idx: number) => buttons[idx] && !prev[idx];
+
+        // A button (0) or Start button (9) to skip
+        if (justPressed(0) || justPressed(9)) {
+          skipToGame();
+        }
+
+        prevButtons.current = buttons;
+      }
+
+      rafId = requestAnimationFrame(poll);
+    };
+
+    rafId = requestAnimationFrame(poll);
+    return () => cancelAnimationFrame(rafId);
+  }, []);
+
   return (
-    <div className="h-screen w-screen overflow-hidden relative" style={{ background: '#050510' }}>
+    <div
+      className="h-screen w-screen overflow-hidden relative cursor-pointer"
+      style={{ background: '#050510' }}
+      onClick={skipToGame}
+    >
       {/* Background arena image — HQ arena */}
       <div className="absolute inset-0 z-0" style={{
         backgroundImage: `url(${ASSET_URLS.arenaHQ})`,
@@ -135,7 +186,7 @@ export default function VSScreen() {
         <img
           src={home?.logo}
           alt={home?.name}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-contain pointer-events-none"
           style={{
             filter: `drop-shadow(0 0 20px ${home?.glow}88) drop-shadow(0 0 40px ${home?.glow}44)`,
           }}
@@ -194,7 +245,7 @@ export default function VSScreen() {
         <img
           src={away?.logo}
           alt={away?.name}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-contain pointer-events-none"
           style={{
             filter: `drop-shadow(0 0 20px ${away?.glow}88) drop-shadow(0 0 40px ${away?.glow}44)`,
           }}
@@ -273,7 +324,7 @@ export default function VSScreen() {
       <AnimatePresence>
         {phase === 'flash' && (
           <motion.div
-            className="absolute inset-0 z-[20]"
+            className="absolute inset-0 z-[20] pointer-events-none"
             initial={{ opacity: 0 }}
             animate={{ opacity: [0, 0.8, 0] }}
             transition={{ duration: 0.5, times: [0, 0.15, 1] }}
@@ -284,7 +335,7 @@ export default function VSScreen() {
 
       {/* Top bar — PYROBALL FIRST FIRE */}
       <motion.div
-        className="absolute top-0 left-0 right-0 z-[12] flex items-center justify-center py-6"
+        className="absolute top-0 left-0 right-0 z-[12] flex items-center justify-center py-6 pointer-events-none"
         initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: phase !== 'exit' ? 1 : 0, y: phase !== 'exit' ? 0 : -30 }}
         transition={{ delay: 0.5, duration: 0.5 }}
@@ -305,35 +356,31 @@ export default function VSScreen() {
         </div>
       </motion.div>
 
-      {/* Bottom bar — MATCH STARTING */}
+      {/* Bottom bar — PRESS A TO SKIP / MATCH STARTING */}
       <motion.div
-        className="absolute bottom-0 left-0 right-0 z-[12] flex items-center justify-center py-6"
+        className="absolute bottom-0 left-0 right-0 z-[12] flex items-center justify-center py-6 pointer-events-none"
         initial={{ opacity: 0, y: 30 }}
-        animate={
-          phase === 'flash' || phase === 'exit'
-            ? { opacity: [0, 1], y: 0 }
-            : { opacity: 0, y: 30 }
-        }
-        transition={{ duration: 0.5 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5, duration: 0.5 }}
       >
         <div className="flex items-center gap-3">
           <motion.div
             className="h-px bg-white/20"
             initial={{ width: 0 }}
             animate={{ width: 40 }}
-            transition={{ delay: 2.2, duration: 0.5 }}
+            transition={{ delay: 0.6, duration: 0.5 }}
           />
           <p
             className="text-white/50 text-xs tracking-[0.3em]"
             style={{ fontFamily: 'Space Grotesk, sans-serif' }}
           >
-            MATCH STARTING
+            {phase === 'flash' || phase === 'exit' ? 'MATCH STARTING' : 'PRESS A / ENTER TO SKIP'}
           </p>
           <motion.div
             className="h-px bg-white/20"
             initial={{ width: 0 }}
             animate={{ width: 40 }}
-            transition={{ delay: 2.2, duration: 0.5 }}
+            transition={{ delay: 0.6, duration: 0.5 }}
           />
         </div>
       </motion.div>

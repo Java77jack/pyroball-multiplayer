@@ -13,6 +13,10 @@ import {
   createCrowdState, updateCrowd, drawCrowd, drawCrowdGlow,
   type CrowdState,
 } from '@/lib/crowdSystem';
+import {
+  drawPlayerCharacter, getPlayerPose as getVectorPose,
+  type PlayerPose,
+} from '@/lib/playerRenderer';
 
 // ============================================================
 // PERSPECTIVE 3D RENDERING ENGINE
@@ -135,42 +139,9 @@ function lerpColor(a: string, b: string, t: number): string {
 }
 
 // ============================================================
-// SPRITE SHEET SYSTEM — Single sheet per team with 3 rows x 4 cols
-// Row 0: IDLE (4 frames), Row 1: RUNNING (4 frames), Row 2: SHOOTING (4 frames)
-// Sheet size: 2752x1536 -> each cell: 688x512
+// PLAYER RENDERING — Now uses canvas-drawn vector characters
+// from playerRenderer.ts (replaces old sprite sheet system)
 // ============================================================
-type Pose = 'idle' | 'running' | 'shooting';
-const POSE_ROW: Record<Pose, number> = { idle: 0, running: 1, shooting: 2 };
-const SPRITE_COLS = 4;
-const SPRITE_ROWS = 3;
-
-// Sprite sheet cache: teamId -> HTMLImageElement
-const sheetCache: Record<string, HTMLImageElement> = {};
-const sheetsLoaded: Record<string, boolean> = {};
-
-function preloadSpriteSheets() {
-  Object.values(TEAMS).forEach(team => {
-    if (!team.spriteSheet) return;
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = team.spriteSheet;
-    img.onload = () => { sheetsLoaded[team.id] = true; };
-    sheetCache[team.id] = img;
-  });
-}
-
-// Call once at module load
-preloadSpriteSheets();
-
-function getPlayerPose(p: PlayerState, gs: GameState): Pose {
-  // Priority: shooting > running > idle (spinning/jumping use running frame)
-  if (gs.shotMeter?.active && gs.shotMeter.playerId === p.id) return 'shooting';
-  if (p.isSpinning && p.spinTimer > 0) return 'running';
-  if (p.isJumping && p.jumpZ > 0.5) return 'running';
-  const speed = Math.sqrt(p.vel.x * p.vel.x + p.vel.y * p.vel.y);
-  if (speed > 0.3) return 'running';
-  return 'idle';
-}
 
 // ============================================================
 // FIELD OVERLAY REMOVED — arena base image has all zones baked in
@@ -302,7 +273,7 @@ function drawGoals(ctx: CanvasRenderingContext2D, gs: GameState, frame: number) 
 }
 
 // ============================================================
-// DRAW PLAYER — Sprite-based rendering with 5 poses per team
+// DRAW PLAYER — Canvas-drawn vector characters with team colors
 // ============================================================
 function drawPlayer(ctx: CanvasRenderingContext2D, p: PlayerState, team: TeamData, frame: number, gs: GameState) {
   const { x: gx, y: gy } = p.pos;
@@ -341,12 +312,10 @@ function drawPlayer(ctx: CanvasRenderingContext2D, p: PlayerState, team: TeamDat
   ctx.fill();
   ctx.restore();
 
-  // ---- SPRITE SHEET RENDERING ----
-  const pose = getPlayerPose(p, gs);
-  const sheet = sheetCache[p.teamId];
-  const sheetReady = sheet && sheet.complete && sheet.naturalWidth > 0;
+  // ---- VECTOR CHARACTER RENDERING ----
+  const pose = getVectorPose(p, gs);
 
-  // Determine facing direction (flip sprite if facing left)
+  // Determine facing direction
   let facingLeft = false;
   if (isMoving) {
     facingLeft = p.vel.x < -0.1;
@@ -354,78 +323,12 @@ function drawPlayer(ctx: CanvasRenderingContext2D, p: PlayerState, team: TeamDat
     facingLeft = p.id >= 3; // Away team faces left by default
   }
 
-  // Sprite sheet frame selection
-  const row = POSE_ROW[pose];
-  const animFrame = Math.floor(frame * 0.15 + p.id * 1.3) % SPRITE_COLS;
-  const cellW = sheetReady ? sheet.naturalWidth / SPRITE_COLS : 688;
-  const cellH = sheetReady ? sheet.naturalHeight / SPRITE_ROWS : 512;
-  const srcX = animFrame * cellW;
-  const srcY = row * cellH;
+  // Draw the vector character
+  drawPlayerCharacter(
+    ctx, sx, sy, s, pose, frame, p.id,
+    team, facingLeft, jumpOffset, p.number
+  );
 
-  // Sprite dimensions — scale to match the perspective
-  const SPRITE_DRAW_H = 45 * s; // Total height of the sprite on screen
-  const spriteAspect = cellW / cellH;
-  const SPRITE_DRAW_W = SPRITE_DRAW_H * spriteAspect;
-
-  // Animation: subtle bob when running (reduced to prevent floating)
-  const runPhase = frame * 0.22 + p.id * 1.7;
-  const bodyBob = isMoving ? Math.abs(Math.sin(runPhase)) * 0.8 * s : 0;
-
-  // IDLE ANIMATIONS - Make players feel alive when standing still
-  const idlePhase = frame * 0.03 + p.id * 0.5; // Slow, gentle animation
-  const idleBob = !isMoving ? Math.sin(idlePhase) * 0.6 * s : 0; // Gentle vertical bobbing
-  const idleSway = !isMoving ? Math.sin(idlePhase * 0.7) * 1.2 * s : 0; // Weight shifting
-  const idleBreath = !isMoving ? (Math.sin(idlePhase * 0.5) * 0.015 + 0.985) : 1; // Breathing
-
-  // Draw the sprite (properly grounded to shadow)
-  ctx.save();
-  const drawX = sx + idleSway; // Add idle sway to horizontal position
-  const drawY = sy - bodyBob - jumpOffset - idleBob - 2 * s; // Anchor sprite + idle bob
-
-  ctx.translate(drawX, drawY);
-  
-  // Apply idle breathing scale
-  ctx.scale(idleBreath, idleBreath);
-  ctx.translate(-drawX + sx + idleSway, -drawY + sy - bodyBob - jumpOffset - idleBob - 2 * s);
-
-  // Spin rotation
-  if (p.isSpinning) {
-    ctx.rotate((p.spinAngle * Math.PI) / 180);
-  }
-
-  // Flip horizontally if facing left
-  if (facingLeft) {
-    ctx.scale(-1, 1);
-  }
-
-  if (sheetReady) {
-    // Draw sprite from sheet using source rectangle clipping
-    ctx.drawImage(
-      sheet,
-      srcX, srcY, cellW, cellH,  // source rectangle from sprite sheet
-      -SPRITE_DRAW_W / 2,
-      -SPRITE_DRAW_H + 4 * s, // offset so feet touch the ground shadow
-      SPRITE_DRAW_W,
-      SPRITE_DRAW_H
-    );
-  } else {
-    // Fallback: simple circle if sprite sheet hasn't loaded yet
-    ctx.beginPath();
-    ctx.arc(0, -visR, visR, 0, Math.PI * 2);
-    ctx.fillStyle = team.primary;
-    ctx.fill();
-    ctx.strokeStyle = team.secondary;
-    ctx.lineWidth = 2;
-    ctx.stroke();
-  }
-
-  ctx.restore(); // undo translate/flip/spin/scale
-
-  // ---- LEGACY BODY CODE REMOVED — replaced by sprites above ----
-  // The old procedural body (legs, torso, arms, helmet) is no longer drawn.
-  // All overlay effects below are preserved.
-  const leg = 0; // placeholder to avoid breaking  // Visor gleam placeholder for remaining code
-  const visorGleam = Math.sin(frame * 0.06 + p.id * 1.5) * 0.5 + 0.5; void visorGleam;
   // ---- Adjusted Y for indicators ----
   const adjustedSy = sy - jumpOffset;
 
@@ -471,7 +374,7 @@ function drawPlayer(ctx: CanvasRenderingContext2D, p: PlayerState, team: TeamDat
     ctx.stroke();
 
     // Arrow above
-    const arrowY = adjustedSy - visR - 18 * s - bodyBob;
+    const arrowY = adjustedSy - visR - 18 * s;
     const bob = Math.sin(frame * 0.07) * 2 * s;
     ctx.beginPath();
     ctx.moveTo(sx, arrowY + bob + 3 * s);
