@@ -327,69 +327,72 @@ export function updateCrowd(
 // DRAW CROWD (called in the render loop)
 // ============================================================
 
+// Pre-sorted flag — figures are sorted once at creation and never move in y
+let _figuresSorted = false;
+
 export function drawCrowd(
   ctx: CanvasRenderingContext2D,
   state: CrowdState,
   canvasW: number,
   canvasH: number,
 ): void {
-  // --- Draw crowd figures ---
-  // Sort by row for proper depth (back rows first)
-  const sorted = [...state.figures].sort((a, b) => a.y - b.y);
+  // Sort figures once (they don't move in y) — avoids O(n log n) per frame
+  if (!_figuresSorted && state.figures.length > 0) {
+    state.figures.sort((a, b) => a.y - b.y);
+    _figuresSorted = true;
+  }
 
-  for (const fig of sorted) {
+  const globalAlpha = 0.7 + state.excitement * 0.3;
+  const swayPhase = state.swayPhase;
+  const figures = state.figures;
+  const len = figures.length;
+
+  // Batch body dots
+  ctx.globalAlpha = globalAlpha;
+  for (let i = 0; i < len; i++) {
+    const fig = figures[i];
     const wave = fig.waveAmplitude;
-    const sway = Math.sin(state.swayPhase * 2 + fig.phaseOffset) * wave * fig.size * 2;
-    const bounce = fig.bounceOffset;
+    const sway = Math.sin(swayPhase * 2 + fig.phaseOffset) * wave * fig.size * 2;
+    const fx = fig.x + sway * 0.3;
+    const fy = fig.y - fig.bounceOffset;
 
-    ctx.save();
-    ctx.translate(fig.x + sway * 0.3, fig.y - bounce);
-
-    // Body (small dot)
+    // Body dot
     ctx.fillStyle = fig.color;
-    ctx.globalAlpha = 0.7 + state.excitement * 0.3;
     ctx.beginPath();
-    ctx.arc(0, 0, fig.size, 0, Math.PI * 2);
+    ctx.arc(fx, fy, fig.size, 0, Math.PI * 2);
     ctx.fill();
 
-    // Head (smaller dot above)
-    ctx.fillStyle = '#F5D0A9'; // skin tone
+    // Head dot
+    ctx.fillStyle = '#F5D0A9';
     ctx.beginPath();
-    ctx.arc(0, -fig.size * 1.2, fig.size * 0.6, 0, Math.PI * 2);
+    ctx.arc(fx, fy - fig.size * 1.2, fig.size * 0.6, 0, Math.PI * 2);
     ctx.fill();
 
-    // Arms waving during excitement
+    // Arms (only when waving)
     if (wave > 0.1) {
-      const armAngle = Math.sin(state.swayPhase * 4 + fig.phaseOffset) * wave * 0.8;
+      const armAngle = Math.sin(swayPhase * 4 + fig.phaseOffset) * wave * 0.8;
       ctx.strokeStyle = fig.color;
       ctx.lineWidth = Math.max(1, fig.size * 0.4);
       ctx.lineCap = 'round';
 
-      // Left arm
       ctx.beginPath();
-      ctx.moveTo(-fig.size * 0.8, -fig.size * 0.3);
-      ctx.lineTo(
-        -fig.size * 2 + sway * 0.5,
-        -fig.size * (1.5 + armAngle * 1.5),
-      );
+      ctx.moveTo(fx - fig.size * 0.8, fy - fig.size * 0.3);
+      ctx.lineTo(fx - fig.size * 2 + sway * 0.5, fy - fig.size * (1.5 + armAngle * 1.5));
       ctx.stroke();
 
-      // Right arm
       ctx.beginPath();
-      ctx.moveTo(fig.size * 0.8, -fig.size * 0.3);
-      ctx.lineTo(
-        fig.size * 2 - sway * 0.5,
-        -fig.size * (1.5 - armAngle * 1.5),
-      );
+      ctx.moveTo(fx + fig.size * 0.8, fy - fig.size * 0.3);
+      ctx.lineTo(fx + fig.size * 2 - sway * 0.5, fy - fig.size * (1.5 - armAngle * 1.5));
       ctx.stroke();
     }
-
-    ctx.globalAlpha = 1;
-    ctx.restore();
   }
 
+  ctx.globalAlpha = 1;
+
   // --- Draw confetti ---
-  for (const p of state.confetti) {
+  const confetti = state.confetti;
+  for (let i = 0; i < confetti.length; i++) {
+    const p = confetti[i];
     const alpha = 1 - (p.life / p.maxLife);
     if (alpha <= 0) continue;
 
@@ -398,10 +401,7 @@ export function drawCrowd(
     ctx.rotate(p.rotation);
     ctx.globalAlpha = alpha * 0.9;
     ctx.fillStyle = p.color;
-
-    // Draw as small rectangle (confetti strip)
     ctx.fillRect(-p.width / 2, -p.height / 2, p.width, p.height);
-
     ctx.globalAlpha = 1;
     ctx.restore();
   }

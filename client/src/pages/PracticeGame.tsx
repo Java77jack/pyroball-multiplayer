@@ -111,10 +111,11 @@ export default function PracticeGame() {
     };
   }, [triggerAction, showResults, resultsFocus]);
 
-  // Keyboard joystick — disabled when results showing
+  // Keyboard joystick — uses RAF for instant response, disabled when results showing
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (showResults) { setJoystick({ x: 0, y: 0 }); return; }
+    let rafId = 0;
+    const pollKeys = () => {
+      if (showResults) { setJoystick({ x: 0, y: 0 }); rafId = requestAnimationFrame(pollKeys); return; }
       const keys = keysRef.current;
       let x = 0, y = 0;
       if (keys.has('w') || keys.has('arrowup')) y = -1;
@@ -123,8 +124,10 @@ export default function PracticeGame() {
       if (keys.has('d') || keys.has('arrowright')) x = 1;
       if (x !== 0 && y !== 0) { const mag = Math.sqrt(x * x + y * y); x /= mag; y /= mag; }
       setJoystick({ x, y });
-    }, 32);
-    return () => clearInterval(interval);
+      rafId = requestAnimationFrame(pollKeys);
+    };
+    rafId = requestAnimationFrame(pollKeys);
+    return () => cancelAnimationFrame(rafId);
   }, [setJoystick, showResults]);
 
   // Gamepad for gameplay — disabled when results showing

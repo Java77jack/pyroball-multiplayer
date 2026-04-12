@@ -38,9 +38,9 @@ export const BROADCAST_CAM = {
   ZOOM_MIN: 1.08,           // Hard cap — never zoom wider than this
 
   // Smoothing (lerp factors per frame at 60fps)
-  PAN_LERP: 0.06,           // How fast camera pans (lower = smoother)
-  ZOOM_LERP: 0.04,          // How fast camera zooms (lower = smoother)
-  ANTICIPATION: 0.15,       // How far ahead to look (fraction of court width)
+  PAN_LERP: 0.14,           // How fast camera pans (higher = more responsive)
+  ZOOM_LERP: 0.10,          // How fast camera zooms (higher = more responsive)
+  ANTICIPATION: 0.10,       // How far ahead to look (fraction of court width)
   
   // Offset: how much to shift toward the attacking goal direction
   ATTACK_OFFSET_X: 60,      // Pixels to shift toward goal on offense

@@ -183,7 +183,7 @@ export function usePracticeEngine(teamId: string, drill: DrillDef) {
   const actionQueueRef = useRef<string[]>([]);
   const runningRef = useRef(false);
   const lastRenderRef = useRef<number>(0);
-  const RENDER_INTERVAL = 33;
+  const RENDER_INTERVAL = 16; // ~60fps render rate for smooth gameplay
 
   // Track combo state for drill detection
   const lastComboRef = useRef<string | null>(null);

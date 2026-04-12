@@ -88,9 +88,10 @@ export default function GameScreen() {
     };
   }, [triggerAction]);
 
-  // Keyboard joystick update loop
+  // Keyboard joystick update loop — uses RAF for instant response
   useEffect(() => {
-    const interval = setInterval(() => {
+    let rafId = 0;
+    const pollKeys = () => {
       const keys = keysRef.current;
       let x = 0, y = 0;
       if (keys.has('w') || keys.has('arrowup')) y = -1;
@@ -105,8 +106,10 @@ export default function GameScreen() {
       }
       
       setJoystick({ x, y });
-    }, 32);
-    return () => clearInterval(interval);
+      rafId = requestAnimationFrame(pollKeys);
+    };
+    rafId = requestAnimationFrame(pollKeys);
+    return () => cancelAnimationFrame(rafId);
   }, [setJoystick]);
 
   // ---- GAMEPAD SUPPORT ----

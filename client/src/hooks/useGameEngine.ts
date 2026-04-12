@@ -425,7 +425,7 @@ export function useGameEngine(homeTeam: string, awayTeam: string, difficulty: Di
   const actionQueueRef = useRef<string[]>([]);
   const runningRef = useRef(false);
   const lastRenderRef = useRef<number>(0);
-  const RENDER_INTERVAL = 33;
+  const RENDER_INTERVAL = 16; // ~60fps render rate for smooth gameplay
 
   const initGame = useCallback(() => {
     const players = createPlayers(homeTeam, awayTeam);

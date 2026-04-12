@@ -73,8 +73,8 @@ export const SPIN = {
 
 export const PLAYER = {
   RADIUS: 12,                // Slightly larger for bigger court
-  SPEED: 4.2,                // Faster to cover more ground
-  SPRINT_SPEED: 5.4,
+  SPEED: 5.5,                // Fast, responsive movement
+  SPRINT_SPEED: 7.0,
   AI_SPEED: 2.5,             // Slowed: AI moves more deliberately
   AI_SPEED_OFFENSE: 2.0,      // Very slow: AI approaches goal slowly, giving player time to defend
   AI_SPEED_DEFENSE: 2.8,      // Slowed: AI defenders less overwhelming
