@@ -10,7 +10,7 @@ import {
   type CameraState,
 } from '@/lib/broadcastCamera';
 import {
-  createCrowdState, updateCrowd, drawCrowd, drawCrowdGlow,
+  createCrowdState, updateCrowd, drawCrowd,
   type CrowdState,
 } from '@/lib/crowdSystem';
 import {
@@ -1053,7 +1053,6 @@ export default function GameCanvas({ gameState }: GameCanvasProps) {
     ctx.restore(); // end broadcast camera + shake transform
 
     // ---- SCREEN-SPACE OVERLAYS (not affected by camera pan/zoom) ----
-    drawCrowdGlow(ctx, crowdRef.current, CANVAS_W, CANVAS_H);
     drawMinimalOverlays(ctx, gs, frame);
   }, []);
 

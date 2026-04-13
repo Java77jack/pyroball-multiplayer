@@ -2,14 +2,15 @@
  * PlayerRenderer — Canvas-drawn vector characters for Pyroball
  * 
  * Draws stylized 2D players with:
- * - Helmet with visor and face cage
- * - Jersey with player number
- * - Shorts/pants with team stripes
+ * - Sleek helmet with visor and face cage
+ * - Athletic jersey with player number
+ * - Muscular torso and limbs
  * - Animated arms (swing when running, extend for shoot/pass/catch)
  * - Animated legs (run cycle, jump, idle weight shift)
  * - Dynamic team colors from TeamData
+ * - Enhanced shading and detail for a polished look
  * 
- * Style: Retro Bowl / NBA Jam inspired — chunky, readable, animated
+ * Style: Athletic, modern, polished — inspired by sports games with realistic proportions
  */
 
 import type { PlayerState, TeamData, GameState } from './gameConstants';
@@ -47,30 +48,14 @@ function lighten(hex: string, amount: number): string {
   return `rgb(${Math.min(255, Math.round(r + (255 - r) * amount))}, ${Math.min(255, Math.round(g + (255 - g) * amount))}, ${Math.min(255, Math.round(b + (255 - b) * amount))})`;
 }
 
-// Ensure we get a valid hex color (some team colors might be rgb)
 function ensureHex(color: string): string {
   if (color.startsWith('#')) return color;
-  return '#888888'; // fallback
+  return '#888888';
 }
 
 // ============================================================
-// DRAW PLAYER CHARACTER
+// DRAW PLAYER CHARACTER — IMPROVED DESIGN
 // ============================================================
-/**
- * Draw a single player character at the given canvas position.
- * 
- * @param ctx - Canvas 2D context
- * @param sx - Screen X position (projected)
- * @param sy - Screen Y position (projected, ground level)
- * @param scale - Perspective scale factor
- * @param pose - Current animation pose
- * @param frame - Global animation frame counter
- * @param playerId - Player ID (for animation offset)
- * @param team - Team data with colors
- * @param facingLeft - Whether the player faces left
- * @param jumpOffset - Vertical offset from jumping
- * @param playerNumber - Jersey number
- */
 export function drawPlayerCharacter(
   ctx: CanvasRenderingContext2D,
   sx: number,
@@ -86,347 +71,424 @@ export function drawPlayerCharacter(
 ) {
   const s = scale;
   
-  // Base dimensions (at scale 1.0)
-  const HEAD_R = 7 * s;       // Head/helmet radius
-  const BODY_W = 12 * s;      // Torso width
-  const BODY_H = 14 * s;      // Torso height
-  const ARM_LEN = 10 * s;     // Arm length
-  const ARM_W = 3.5 * s;      // Arm thickness
-  const LEG_LEN = 11 * s;     // Leg length
-  const LEG_W = 4 * s;        // Leg thickness
-  const FOOT_LEN = 5 * s;     // Foot length
+  // Improved proportions — more athletic and realistic
+  const HEAD_R = 6.5 * s;       // Slightly smaller head for better proportions
+  const BODY_W = 14 * s;        // Wider, more muscular torso
+  const BODY_H = 16 * s;        // Taller torso
+  const SHOULDER_W = 16 * s;    // Wider shoulders
+  const ARM_LEN = 11 * s;       // Longer arms
+  const ARM_W = 4 * s;          // Thicker arms (more muscular)
+  const LEG_LEN = 13 * s;       // Longer legs for athletic look
+  const LEG_W = 4.5 * s;        // Thicker legs
+  const FOOT_LEN = 6 * s;       // Larger feet
   
-  // Colors
+  // Colors with better shading
   const jerseyColor = ensureHex(team.secondary);
-  const jerseyDark = darken(jerseyColor, 0.2);
+  const jerseyDark = darken(jerseyColor, 0.25);
+  const jerseyLight = lighten(jerseyColor, 0.15);
   const pantsColor = ensureHex(team.primary);
-  const pantsDark = darken(pantsColor, 0.15);
+  const pantsDark = darken(pantsColor, 0.2);
+  const pantsLight = lighten(pantsColor, 0.1);
   const helmetColor = ensureHex(team.secondary);
-  const helmetDark = darken(helmetColor, 0.25);
-  const visorColor = 'rgba(120, 200, 255, 0.7)';
-  const skinColor = '#C68642';
-  const shoeColor = '#333333';
-  const gloveColor = '#555555';
+  const helmetDark = darken(helmetColor, 0.3);
+  const helmetLight = lighten(helmetColor, 0.2);
+  const visorColor = 'rgba(100, 180, 255, 0.8)';
+  const skinColor = '#D4A574';  // Better skin tone
+  const shoeColor = '#222222';
+  const shoeDark = '#111111';
+  const gloveColor = '#444444';
   const stripeColor = ensureHex(team.accent);
   
-  // Animation phase (offset per player for variety)
+  // Animation phase
   const t = frame * 0.15 + playerId * 2.1;
   
   // ---- ANIMATION CALCULATIONS ----
-  let leftArmAngle = 0;   // radians from vertical (down = 0)
+  let leftArmAngle = 0;
   let rightArmAngle = 0;
   let leftLegAngle = 0;
   let rightLegAngle = 0;
-  let leftKnee = 0;       // knee bend
+  let leftKnee = 0;
   let rightKnee = 0;
-  let bodyTilt = 0;        // forward lean
-  let bodyBob = 0;         // vertical bounce
-  let armBendL = 0;        // elbow bend
+  let bodyTilt = 0;
+  let bodyBob = 0;
+  let armBendL = 0;
   let armBendR = 0;
   
   switch (pose) {
     case 'idle': {
-      // Gentle weight shift and breathing
       const breathe = Math.sin(t * 0.3) * 0.02;
-      bodyBob = Math.sin(t * 0.25) * 0.5 * s;
-      leftArmAngle = 0.15 + Math.sin(t * 0.2) * 0.05;
-      rightArmAngle = -0.15 - Math.sin(t * 0.2) * 0.05;
-      armBendL = 0.3;
-      armBendR = 0.3;
-      leftLegAngle = 0.05;
-      rightLegAngle = -0.05;
+      bodyBob = Math.sin(t * 0.25) * 0.3 * s;
+      leftArmAngle = 0.1 + Math.sin(t * 0.2) * 0.04;
+      rightArmAngle = -0.1 - Math.sin(t * 0.2) * 0.04;
+      armBendL = 0.25;
+      armBendR = 0.25;
+      leftLegAngle = 0.03;
+      rightLegAngle = -0.03;
       bodyTilt = breathe;
       break;
     }
     case 'running': {
-      // Full run cycle - legs and arms pump opposite
       const runCycle = Math.sin(t * 1.8);
       const runCycle2 = Math.cos(t * 1.8);
-      bodyTilt = 0.15; // lean forward
-      bodyBob = Math.abs(Math.sin(t * 1.8)) * 2.5 * s;
+      bodyTilt = 0.12;
+      bodyBob = Math.abs(Math.sin(t * 1.8)) * 2.8 * s;
       
-      leftLegAngle = runCycle * 0.7;
-      rightLegAngle = -runCycle * 0.7;
-      leftKnee = Math.max(0, -runCycle) * 0.8; // bend when leg swings back
-      rightKnee = Math.max(0, runCycle) * 0.8;
+      leftLegAngle = runCycle * 0.75;
+      rightLegAngle = -runCycle * 0.75;
+      leftKnee = Math.max(0, -runCycle) * 0.85;
+      rightKnee = Math.max(0, runCycle) * 0.85;
       
-      // Arms swing opposite to legs
-      leftArmAngle = -runCycle * 0.5;
-      rightArmAngle = runCycle * 0.5;
-      armBendL = 0.7 + runCycle2 * 0.2;
-      armBendR = 0.7 - runCycle2 * 0.2;
+      leftArmAngle = -runCycle * 0.55;
+      rightArmAngle = runCycle * 0.55;
+      armBendL = 0.65 + runCycle2 * 0.25;
+      armBendR = 0.65 - runCycle2 * 0.25;
       break;
     }
     case 'shooting': {
-      // Wind-up and release
       const shootPhase = (t * 0.8) % (Math.PI * 2);
-      bodyTilt = -0.1; // lean back slightly
+      bodyTilt = -0.08;
       
-      // Shooting arm extends up and forward
-      rightArmAngle = -1.2 - Math.sin(shootPhase) * 0.5;
-      armBendR = 0.2;
+      rightArmAngle = -1.3 - Math.sin(shootPhase) * 0.4;
+      armBendR = 0.15;
       
-      // Other arm out for balance
-      leftArmAngle = 0.6;
-      armBendL = 0.4;
+      leftArmAngle = 0.5;
+      armBendL = 0.35;
       
-      // Legs planted
-      leftLegAngle = 0.2;
-      rightLegAngle = -0.15;
-      leftKnee = 0.2;
+      leftLegAngle = 0.15;
+      rightLegAngle = -0.1;
+      leftKnee = 0.15;
       break;
     }
     case 'jumping': {
-      // Legs tucked, arms up
       bodyBob = 0;
-      leftLegAngle = 0.3;
-      rightLegAngle = -0.3;
-      leftKnee = 0.9;
-      rightKnee = 0.9;
-      leftArmAngle = -0.8;
-      rightArmAngle = 0.8;
-      armBendL = 0.3;
-      armBendR = 0.3;
+      leftLegAngle = 0.25;
+      rightLegAngle = -0.25;
+      leftKnee = 0.95;
+      rightKnee = 0.95;
+      leftArmAngle = -0.75;
+      rightArmAngle = 0.75;
+      armBendL = 0.25;
+      armBendR = 0.25;
       break;
     }
     case 'passing': {
-      // One arm extended forward
-      rightArmAngle = -0.9;
+      rightArmAngle = -0.85;
       armBendR = 0.1;
-      leftArmAngle = 0.4;
-      armBendL = 0.5;
-      bodyTilt = 0.1;
-      leftLegAngle = 0.15;
-      rightLegAngle = -0.1;
+      leftArmAngle = 0.35;
+      armBendL = 0.45;
+      bodyTilt = 0.08;
+      leftLegAngle = 0.12;
+      rightLegAngle = -0.08;
       break;
     }
     case 'catching': {
-      // Both arms forward
-      leftArmAngle = -0.5;
-      rightArmAngle = 0.5;
-      armBendL = 0.2;
-      armBendR = 0.2;
-      leftLegAngle = 0.1;
-      rightLegAngle = -0.1;
+      leftArmAngle = -0.45;
+      rightArmAngle = 0.45;
+      armBendL = 0.15;
+      armBendR = 0.15;
+      leftLegAngle = 0.08;
+      rightLegAngle = -0.08;
       break;
     }
   }
   
   ctx.save();
   
-  // Position at ground level, offset by jump
   const baseY = sy - jumpOffset - bodyBob;
   
-  // Flip if facing left
   if (facingLeft) {
     ctx.translate(sx, 0);
     ctx.scale(-1, 1);
     ctx.translate(-sx, 0);
   }
   
-  // Apply body tilt
   ctx.translate(sx, baseY);
   ctx.rotate(bodyTilt);
   ctx.translate(-sx, -baseY);
   
-  // ---- DRAW ORDER: legs (back) -> body -> arms (front) ----
+  // ---- DRAW ORDER: legs (back) -> body -> arms (front) -> head ----
   
   // ======== LEGS ========
-  const hipY = baseY - BODY_H * 0.3; // hip joint position
-  const hipOffsetX = BODY_W * 0.2;
+  const hipY = baseY - BODY_H * 0.25;
+  const hipOffsetX = BODY_W * 0.25;
   
-  // Back leg (left)
-  drawLeg(ctx, sx - hipOffsetX, hipY, leftLegAngle, leftKnee, LEG_LEN, LEG_W, FOOT_LEN, pantsColor, pantsDark, shoeColor, s);
-  
-  // Front leg (right)
-  drawLeg(ctx, sx + hipOffsetX, hipY, rightLegAngle, rightKnee, LEG_LEN, LEG_W, FOOT_LEN, pantsColor, pantsDark, shoeColor, s);
+  drawLeg(ctx, sx - hipOffsetX, hipY, leftLegAngle, leftKnee, LEG_LEN, LEG_W, FOOT_LEN, pantsColor, pantsDark, pantsLight, shoeColor, shoeDark, s);
+  drawLeg(ctx, sx + hipOffsetX, hipY, rightLegAngle, rightKnee, LEG_LEN, LEG_W, FOOT_LEN, pantsColor, pantsDark, pantsLight, shoeColor, shoeDark, s);
   
   // ======== TORSO / JERSEY ========
-  const torsoTop = baseY - BODY_H - LEG_LEN * 0.5;
+  const torsoTop = baseY - BODY_H - LEG_LEN * 0.4;
   const torsoBot = hipY;
   
-  // Jersey body
+  // Jersey body with gradient-like shading
   ctx.beginPath();
   ctx.moveTo(sx - BODY_W / 2, torsoTop + 2 * s);
   ctx.lineTo(sx + BODY_W / 2, torsoTop + 2 * s);
-  ctx.lineTo(sx + BODY_W / 2 + 1 * s, torsoBot);
-  ctx.lineTo(sx - BODY_W / 2 - 1 * s, torsoBot);
+  ctx.lineTo(sx + BODY_W / 2 + 1.5 * s, torsoBot);
+  ctx.lineTo(sx - BODY_W / 2 - 1.5 * s, torsoBot);
   ctx.closePath();
   ctx.fillStyle = jerseyColor;
   ctx.fill();
   ctx.strokeStyle = jerseyDark;
-  ctx.lineWidth = 0.8 * s;
+  ctx.lineWidth = 1 * s;
   ctx.stroke();
+  
+  // Jersey highlight (left side for depth)
+  ctx.beginPath();
+  ctx.moveTo(sx - BODY_W / 2 + 1 * s, torsoTop + 2 * s);
+  ctx.lineTo(sx - BODY_W / 2 + 2 * s, torsoTop + BODY_H * 0.4);
+  ctx.lineTo(sx - BODY_W / 2 + 1.5 * s, torsoBot);
+  ctx.closePath();
+  ctx.fillStyle = jerseyLight;
+  ctx.globalAlpha = 0.4;
+  ctx.fill();
+  ctx.globalAlpha = 1;
   
   // Jersey stripe (horizontal across chest)
   ctx.beginPath();
   const stripeY = torsoTop + BODY_H * 0.35;
   ctx.moveTo(sx - BODY_W / 2, stripeY);
   ctx.lineTo(sx + BODY_W / 2, stripeY);
-  ctx.lineTo(sx + BODY_W / 2, stripeY + 2.5 * s);
-  ctx.lineTo(sx - BODY_W / 2, stripeY + 2.5 * s);
+  ctx.lineTo(sx + BODY_W / 2, stripeY + 3 * s);
+  ctx.lineTo(sx - BODY_W / 2, stripeY + 3 * s);
   ctx.closePath();
   ctx.fillStyle = stripeColor;
   ctx.fill();
+  ctx.strokeStyle = darken(stripeColor, 0.2);
+  ctx.lineWidth = 0.5 * s;
+  ctx.stroke();
   
   // Player number on jersey
-  const numSize = Math.max(6, Math.round(7 * s));
+  const numSize = Math.max(8, Math.round(9 * s));
   ctx.font = `bold ${numSize}px Arial, sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = ensureHex(team.primary);
-  // Ensure number is readable against jersey
+  ctx.shadowColor = 'rgba(0,0,0,0.5)';
+  ctx.shadowBlur = 2;
   const numY = torsoTop + BODY_H * 0.55;
   ctx.fillText(String(playerNumber), sx, numY);
+  ctx.shadowBlur = 0;
   
   // ======== ARMS ========
-  const shoulderY = torsoTop + 3 * s;
-  const shoulderOffsetX = BODY_W / 2 + 1 * s;
+  const shoulderY = torsoTop + 2 * s;
+  const shoulderOffsetX = SHOULDER_W / 2;
   
-  // Left arm (back)
-  drawArm(ctx, sx - shoulderOffsetX, shoulderY, leftArmAngle, armBendL, ARM_LEN, ARM_W, jerseyColor, skinColor, gloveColor, s);
-  
-  // Right arm (front)
-  drawArm(ctx, sx + shoulderOffsetX, shoulderY, rightArmAngle, armBendR, ARM_LEN, ARM_W, jerseyColor, skinColor, gloveColor, s);
+  drawArm(ctx, sx - shoulderOffsetX, shoulderY, leftArmAngle, armBendL, ARM_LEN, ARM_W, jerseyColor, jerseyDark, skinColor, gloveColor, s);
+  drawArm(ctx, sx + shoulderOffsetX, shoulderY, rightArmAngle, armBendR, ARM_LEN, ARM_W, jerseyColor, jerseyDark, skinColor, gloveColor, s);
   
   // ======== HEAD / HELMET ========
-  const headY = torsoTop - HEAD_R * 0.5;
+  const headY = torsoTop - HEAD_R * 0.4;
   
-  // Helmet
+  // Helmet with shading
   ctx.beginPath();
   ctx.arc(sx, headY, HEAD_R, 0, Math.PI * 2);
   ctx.fillStyle = helmetColor;
   ctx.fill();
+  
+  // Helmet highlight (top-left)
+  const helmetGrad = ctx.createRadialGradient(sx - HEAD_R * 0.3, headY - HEAD_R * 0.3, HEAD_R * 0.2, sx, headY, HEAD_R);
+  helmetGrad.addColorStop(0, helmetLight);
+  helmetGrad.addColorStop(1, helmetColor);
+  ctx.fillStyle = helmetGrad;
+  ctx.globalAlpha = 0.5;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  
   ctx.strokeStyle = helmetDark;
-  ctx.lineWidth = 1 * s;
+  ctx.lineWidth = 1.2 * s;
   ctx.stroke();
   
   // Helmet stripe (top)
   ctx.beginPath();
   ctx.moveTo(sx, headY - HEAD_R);
-  ctx.lineTo(sx, headY + HEAD_R * 0.3);
+  ctx.lineTo(sx, headY + HEAD_R * 0.2);
   ctx.strokeStyle = stripeColor;
-  ctx.lineWidth = 2 * s;
+  ctx.lineWidth = 2.5 * s;
   ctx.stroke();
   
-  // Visor
+  // Visor with better shading
   ctx.beginPath();
-  const visorY = headY + HEAD_R * 0.1;
-  ctx.ellipse(sx + HEAD_R * 0.3, visorY, HEAD_R * 0.55, HEAD_R * 0.3, 0, 0, Math.PI * 2);
+  const visorY = headY + HEAD_R * 0.05;
+  ctx.ellipse(sx + HEAD_R * 0.25, visorY, HEAD_R * 0.6, HEAD_R * 0.35, 0, 0, Math.PI * 2);
   ctx.fillStyle = visorColor;
   ctx.fill();
-  ctx.strokeStyle = '#666';
-  ctx.lineWidth = 0.5 * s;
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 0.7 * s;
   ctx.stroke();
   
-  // Face cage (3 horizontal bars)
-  ctx.strokeStyle = '#999';
-  ctx.lineWidth = 0.6 * s;
-  for (let i = 0; i < 3; i++) {
-    const barY = visorY - HEAD_R * 0.2 + i * HEAD_R * 0.2;
+  // Visor shine
+  ctx.beginPath();
+  ctx.ellipse(sx + HEAD_R * 0.35, visorY - HEAD_R * 0.15, HEAD_R * 0.25, HEAD_R * 0.15, 0, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.fill();
+  
+  // Face cage (4 vertical bars for more detail)
+  ctx.strokeStyle = '#555';
+  ctx.lineWidth = 0.7 * s;
+  for (let i = 0; i < 4; i++) {
+    const barX = sx + HEAD_R * 0.05 + i * HEAD_R * 0.2;
     ctx.beginPath();
-    ctx.moveTo(sx + HEAD_R * 0.1, barY);
-    ctx.lineTo(sx + HEAD_R * 0.85, barY);
+    ctx.moveTo(barX, visorY - HEAD_R * 0.25);
+    ctx.lineTo(barX, visorY + HEAD_R * 0.25);
     ctx.stroke();
   }
   
-  // Ear hole / chin strap
+  // Chin strap
   ctx.beginPath();
-  ctx.arc(sx - HEAD_R * 0.7, headY + HEAD_R * 0.3, 1.5 * s, 0, Math.PI * 2);
-  ctx.fillStyle = '#888';
+  ctx.arc(sx - HEAD_R * 0.65, headY + HEAD_R * 0.35, 2 * s, 0, Math.PI * 2);
+  ctx.fillStyle = '#666';
   ctx.fill();
   
   ctx.restore();
 }
 
 // ============================================================
-// DRAW LEG (upper + lower with knee bend)
+// DRAW LEG — IMPROVED WITH SHADING
 // ============================================================
 function drawLeg(
   ctx: CanvasRenderingContext2D,
   hipX: number, hipY: number,
   angle: number, kneeBend: number,
   length: number, width: number, footLen: number,
-  pantsColor: string, pantsDark: string, shoeColor: string,
-  s: number,
+  pantsColor: string, pantsDark: string, pantsLight: string, shoeColor: string, shoeDark: string,
+  scale: number,
 ) {
-  const upperLen = length * 0.55;
-  const lowerLen = length * 0.55;
+  const s = scale;
   
+  // Upper leg
+  const kneeX = hipX + Math.sin(angle) * length * 0.5;
+  const kneeY = hipY + Math.cos(angle) * length * 0.5;
+  
+  // Lower leg (bent knee)
+  const footX = kneeX + Math.sin(angle + kneeBend) * length * 0.5;
+  const footY = kneeY + Math.cos(angle + kneeBend) * length * 0.5;
+  
+  // Upper leg (thigh) — thicker
+  ctx.beginPath();
+  const thighW = width * 1.2;
+  const perpX = -Math.cos(angle) * thighW / 2;
+  const perpY = Math.sin(angle) * thighW / 2;
+  ctx.moveTo(hipX + perpX, hipY + perpY);
+  ctx.lineTo(hipX - perpX, hipY - perpY);
+  ctx.lineTo(kneeX - perpX, kneeY - perpY);
+  ctx.lineTo(kneeX + perpX, kneeY + perpY);
+  ctx.closePath();
+  ctx.fillStyle = pantsColor;
+  ctx.fill();
+  ctx.strokeStyle = pantsDark;
+  ctx.lineWidth = 0.6 * s;
+  ctx.stroke();
+  
+  // Thigh highlight
+  ctx.beginPath();
+  ctx.moveTo(hipX + perpX * 0.5, hipY + perpY * 0.5);
+  ctx.lineTo(hipX + perpX, hipY + perpY);
+  ctx.lineTo(kneeX + perpX, kneeY + perpY);
+  ctx.lineTo(kneeX + perpX * 0.5, kneeY + perpY * 0.5);
+  ctx.closePath();
+  ctx.fillStyle = pantsLight;
+  ctx.globalAlpha = 0.3;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  
+  // Lower leg (calf)
+  const calfW = width * 0.9;
+  const perpX2 = -Math.cos(angle + kneeBend) * calfW / 2;
+  const perpY2 = Math.sin(angle + kneeBend) * calfW / 2;
+  ctx.beginPath();
+  ctx.moveTo(kneeX + perpX2, kneeY + perpY2);
+  ctx.lineTo(kneeX - perpX2, kneeY - perpY2);
+  ctx.lineTo(footX - perpX2, footY - perpY2);
+  ctx.lineTo(footX + perpX2, footY + perpY2);
+  ctx.closePath();
+  ctx.fillStyle = pantsColor;
+  ctx.fill();
+  ctx.strokeStyle = pantsDark;
+  ctx.lineWidth = 0.6 * s;
+  ctx.stroke();
+  
+  // Shoe
+  const shoeW = footLen;
+  const shoeH = width * 0.8;
+  const shoeAngle = angle + kneeBend;
   ctx.save();
-  ctx.translate(hipX, hipY);
-  ctx.rotate(angle);
-  
-  // Upper leg (thigh) — pants
+  ctx.translate(footX, footY);
+  ctx.rotate(shoeAngle);
   ctx.beginPath();
-  ctx.roundRect(-width / 2, 0, width, upperLen, 2 * s);
-  ctx.fillStyle = pantsColor;
-  ctx.fill();
-  ctx.strokeStyle = pantsDark;
-  ctx.lineWidth = 0.5 * s;
-  ctx.stroke();
-  
-  // Knee joint
-  ctx.translate(0, upperLen);
-  ctx.rotate(kneeBend);
-  
-  // Lower leg (shin) — pants
-  ctx.beginPath();
-  ctx.roundRect(-width / 2 + 0.3 * s, 0, width - 0.6 * s, lowerLen, 2 * s);
-  ctx.fillStyle = pantsColor;
-  ctx.fill();
-  ctx.strokeStyle = pantsDark;
-  ctx.lineWidth = 0.5 * s;
-  ctx.stroke();
-  
-  // Foot / shoe
-  ctx.beginPath();
-  ctx.roundRect(-width / 2, lowerLen - 1 * s, footLen, 3.5 * s, 1.5 * s);
+  ctx.ellipse(0, 0, shoeW, shoeH, 0, 0, Math.PI * 2);
   ctx.fillStyle = shoeColor;
   ctx.fill();
-  
+  ctx.strokeStyle = shoeDark;
+  ctx.lineWidth = 0.5 * s;
+  ctx.stroke();
   ctx.restore();
 }
 
 // ============================================================
-// DRAW ARM (upper + forearm with elbow bend)
+// DRAW ARM — IMPROVED WITH SHADING
 // ============================================================
 function drawArm(
   ctx: CanvasRenderingContext2D,
   shoulderX: number, shoulderY: number,
-  angle: number, elbowBend: number,
+  angle: number, bend: number,
   length: number, width: number,
-  jerseyColor: string, skinColor: string, gloveColor: string,
-  s: number,
+  jerseyColor: string, jerseyDark: string, skinColor: string, gloveColor: string,
+  scale: number,
 ) {
-  const upperLen = length * 0.5;
-  const forearmLen = length * 0.5;
+  const s = scale;
   
-  ctx.save();
-  ctx.translate(shoulderX, shoulderY);
-  ctx.rotate(angle);
+  // Elbow position
+  const elbowX = shoulderX + Math.sin(angle) * length * 0.5;
+  const elbowY = shoulderY + Math.cos(angle) * length * 0.5;
   
-  // Upper arm (sleeve)
+  // Hand position (with elbow bend)
+  const handX = elbowX + Math.sin(angle + bend) * length * 0.5;
+  const handY = elbowY + Math.cos(angle + bend) * length * 0.5;
+  
+  // Upper arm (shoulder to elbow)
+  const upperW = width * 1.1;
+  const perpX = -Math.cos(angle) * upperW / 2;
+  const perpY = Math.sin(angle) * upperW / 2;
+  
   ctx.beginPath();
-  ctx.roundRect(-width / 2, 0, width, upperLen, 1.5 * s);
+  ctx.moveTo(shoulderX + perpX, shoulderY + perpY);
+  ctx.lineTo(shoulderX - perpX, shoulderY - perpY);
+  ctx.lineTo(elbowX - perpX, elbowY - perpY);
+  ctx.lineTo(elbowX + perpX, elbowY + perpY);
+  ctx.closePath();
   ctx.fillStyle = jerseyColor;
   ctx.fill();
+  ctx.strokeStyle = jerseyDark;
+  ctx.lineWidth = 0.5 * s;
+  ctx.stroke();
   
-  // Elbow
-  ctx.translate(0, upperLen);
-  ctx.rotate(elbowBend);
+  // Forearm (elbow to hand) — with skin showing
+  const foreW = width * 0.9;
+  const perpX2 = -Math.cos(angle + bend) * foreW / 2;
+  const perpY2 = Math.sin(angle + bend) * foreW / 2;
   
-  // Forearm (skin)
   ctx.beginPath();
-  ctx.roundRect(-width / 2 + 0.3 * s, 0, width - 0.6 * s, forearmLen, 1.5 * s);
+  ctx.moveTo(elbowX + perpX2, elbowY + perpY2);
+  ctx.lineTo(elbowX - perpX2, elbowY - perpY2);
+  ctx.lineTo(handX - perpX2, handY - perpY2);
+  ctx.lineTo(handX + perpX2, handY + perpY2);
+  ctx.closePath();
   ctx.fillStyle = skinColor;
   ctx.fill();
+  ctx.strokeStyle = '#999';
+  ctx.lineWidth = 0.5 * s;
+  ctx.stroke();
   
-  // Glove / hand
+  // Glove/hand
+  ctx.save();
+  ctx.translate(handX, handY);
+  ctx.rotate(angle + bend);
   ctx.beginPath();
-  ctx.arc(0, forearmLen, width * 0.6, 0, Math.PI * 2);
+  ctx.ellipse(0, 0, width * 0.8, width, 0, 0, Math.PI * 2);
   ctx.fillStyle = gloveColor;
   ctx.fill();
-  
+  ctx.strokeStyle = '#222';
+  ctx.lineWidth = 0.5 * s;
+  ctx.stroke();
   ctx.restore();
 }

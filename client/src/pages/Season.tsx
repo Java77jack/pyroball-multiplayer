@@ -330,11 +330,12 @@ export default function Season() {
                 {teamEntries.map(([teamId, team], idx) => {
                   const isSelected = teamId === selectedTeam;
                   const isFocused = isTeamFocused(idx);
+                  const stats = team.stats;
                   return (
                     <button
                       key={teamId}
                       onClick={() => { playMenuSelect(); setSelectedTeam(teamId); setFocusIdx(idx); }}
-                      className="rounded-xl border px-4 py-4 text-left transition"
+                      className="rounded-xl border px-4 py-4 text-left transition flex flex-col items-center"
                       style={{
                         borderColor: isFocused
                           ? 'rgba(255,220,0,0.9)'
@@ -351,11 +352,40 @@ export default function Season() {
                         outlineOffset: 2,
                       }}
                     >
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-lg font-bold" style={{ fontFamily: 'Rajdhani, sans-serif' }}>{team.name}</span>
-                        <span className="text-[10px] uppercase tracking-[0.25em] text-white/40">{team.id}</span>
+                      {/* Team Logo */}
+                      <div className="mb-3 flex justify-center">
+                        <img
+                          src={team.logo}
+                          alt={team.name}
+                          className="h-16 w-16 object-contain drop-shadow-lg"
+                          style={{
+                            filter: `drop-shadow(0 0 8px ${team.glow}66)`,
+                          }}
+                        />
                       </div>
-                      <p className="mt-2 text-sm text-white/55">{team.primary.toUpperCase()} primary • {team.secondary.toUpperCase()} trim</p>
+                      
+                      {/* Team Name */}
+                      <span className="text-center text-lg font-bold" style={{ fontFamily: 'Rajdhani, sans-serif' }}>{team.name}</span>
+                      
+                      {/* Stats Grid */}
+                      <div className="mt-3 grid w-full grid-cols-2 gap-2 text-xs">
+                        <div className="rounded bg-white/5 p-2 text-center">
+                          <div className="text-white/60">Speed</div>
+                          <div className="font-bold text-orange-300">{stats.speed}/10</div>
+                        </div>
+                        <div className="rounded bg-white/5 p-2 text-center">
+                          <div className="text-white/60">Scoring</div>
+                          <div className="font-bold text-orange-300">{stats.scoring}/10</div>
+                        </div>
+                        <div className="rounded bg-white/5 p-2 text-center">
+                          <div className="text-white/60">Rebound</div>
+                          <div className="font-bold text-orange-300">{stats.rebounding}/10</div>
+                        </div>
+                        <div className="rounded bg-white/5 p-2 text-center">
+                          <div className="text-white/60">Aggress</div>
+                          <div className="font-bold text-orange-300">{stats.aggressiveness}/10</div>
+                        </div>
+                      </div>
                     </button>
                   );
                 })}

@@ -169,32 +169,7 @@ export function createCrowdState(canvasW: number, canvasH: number): CrowdState {
 // SPAWN CONFETTI BURST
 // ============================================================
 
-function spawnConfetti(state: CrowdState, team: TeamData, canvasW: number, canvasH: number) {
-  const colors = [team.secondary, team.glow, team.accent, '#FFFFFF', '#FFD700'];
-  const count = 120; // generous burst
-
-  for (let i = 0; i < count; i++) {
-    // Spawn from top area, spread across width
-    const x = randomInRange(canvasW * 0.1, canvasW * 0.9);
-    const y = randomInRange(-20, canvasH * 0.15);
-
-    state.confetti.push({
-      x,
-      y,
-      vx: randomInRange(-3, 3),
-      vy: randomInRange(1, 4),
-      rotation: Math.random() * Math.PI * 2,
-      rotationSpeed: randomInRange(-0.15, 0.15),
-      width: randomInRange(4, 10),
-      height: randomInRange(3, 7),
-      color: colors[Math.floor(Math.random() * colors.length)],
-      life: 0,
-      maxLife: randomInRange(3, 6), // 3-6 seconds
-      gravity: randomInRange(0.02, 0.06),
-      drag: randomInRange(0.98, 0.995),
-    });
-  }
-}
+// Confetti spawning removed for performance optimization
 
 // ============================================================
 // UPDATE CROWD STATE (called each frame)
@@ -220,8 +195,7 @@ export function updateCrowd(
       state.celebrationColor = team.secondary;
       state.targetExcitement = 1.0;
 
-      // Spawn confetti
-      spawnConfetti(state, team, canvasW, canvasH);
+      // Confetti removed for performance optimization
 
       // Tint crowd figures toward team color
       for (const fig of state.figures) {
@@ -299,28 +273,7 @@ export function updateCrowd(
     }
   }
 
-  // --- Update confetti particles ---
-  for (let i = state.confetti.length - 1; i >= 0; i--) {
-    const p = state.confetti[i];
-    p.life += dt;
-
-    if (p.life >= p.maxLife || p.y > canvasH + 20) {
-      state.confetti.splice(i, 1);
-      continue;
-    }
-
-    // Physics
-    p.vy += p.gravity;
-    p.vx *= p.drag;
-    p.vy *= p.drag;
-
-    // Wind sway
-    p.vx += Math.sin(state.swayPhase * 2 + p.x * 0.01) * 0.05;
-
-    p.x += p.vx;
-    p.y += p.vy;
-    p.rotation += p.rotationSpeed;
-  }
+  // Confetti update removed for performance optimization
 }
 
 // ============================================================
@@ -389,54 +342,7 @@ export function drawCrowd(
 
   ctx.globalAlpha = 1;
 
-  // --- Draw confetti ---
-  const confetti = state.confetti;
-  for (let i = 0; i < confetti.length; i++) {
-    const p = confetti[i];
-    const alpha = 1 - (p.life / p.maxLife);
-    if (alpha <= 0) continue;
-
-    ctx.save();
-    ctx.translate(p.x, p.y);
-    ctx.rotate(p.rotation);
-    ctx.globalAlpha = alpha * 0.9;
-    ctx.fillStyle = p.color;
-    ctx.fillRect(-p.width / 2, -p.height / 2, p.width, p.height);
-    ctx.globalAlpha = 1;
-    ctx.restore();
-  }
+  // Confetti drawing removed for performance optimization
 }
 
-// ============================================================
-// DRAW CROWD GLOW (screen-space overlay for goal celebrations)
-// Called AFTER camera restore for screen-space effects
-// ============================================================
-
-export function drawCrowdGlow(
-  ctx: CanvasRenderingContext2D,
-  state: CrowdState,
-  canvasW: number,
-  canvasH: number,
-): void {
-  if (state.goalCelebration <= 0) return;
-
-  // Pulsing team-colored glow from the stands
-  const pulse = Math.sin(state.swayPhase * 6) * 0.5 + 0.5;
-  const intensity = (state.goalCelebration / 4.0) * pulse * 0.15;
-
-  if (intensity > 0.01) {
-    // Top glow (from upper stands)
-    const grad = ctx.createLinearGradient(0, 0, 0, canvasH * 0.3);
-    grad.addColorStop(0, state.celebrationColor + Math.floor(intensity * 255).toString(16).padStart(2, '0'));
-    grad.addColorStop(1, state.celebrationColor + '00');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, canvasW, canvasH * 0.3);
-
-    // Bottom glow (from lower stands)
-    const grad2 = ctx.createLinearGradient(0, canvasH, 0, canvasH * 0.7);
-    grad2.addColorStop(0, state.celebrationColor + Math.floor(intensity * 200).toString(16).padStart(2, '0'));
-    grad2.addColorStop(1, state.celebrationColor + '00');
-    ctx.fillStyle = grad2;
-    ctx.fillRect(0, canvasH * 0.7, canvasW, canvasH * 0.3);
-  }
-}
+// Crowd glow overlay removed for performance optimization

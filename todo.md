@@ -226,3 +226,13 @@
 - [x] Increase player speed for responsive feel (4.2 → 5.5)
 - [x] Increase camera responsiveness (PAN_LERP: 0.06 → 0.14, ZOOM_LERP: 0.04 → 0.10)
 - [x] Verify smooth gameplay after fixes (all 116 tests passing)
+
+## Player Character Visual Redesign
+- [ ] Improve player body proportions (more athletic, muscular build)
+- [ ] Enhance helmet design with better shading and detail
+- [ ] Improve jersey/uniform rendering with better shading
+- [ ] Add more visual polish and detail to overall character design
+- [ ] Verify all animations (idle, run, jump, shoot, pass, catch) still work smoothly
+- [ ] Remove confetti burst effect on goals (performance optimization)
+- [ ] Remove crowd overlay glow effect on goals (performance optimization)
+- [ ] Test improved player visuals in-game
