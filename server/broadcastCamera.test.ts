@@ -4,12 +4,11 @@ import {
   updateCamera,
   determineCameraMode,
   computePlayerGroupBounds,
-  clamp,
-  lerp,
   BROADCAST_CAM,
   type CameraState,
 } from '../client/src/lib/broadcastCamera';
 import { COURT } from '../client/src/lib/gameConstants';
+import { clamp, lerp } from '../client/src/lib/utils';
 import type { GameState, PlayerState, BallState } from '../client/src/lib/gameConstants';
 
 // ---- Helpers to build minimal mock game state ----

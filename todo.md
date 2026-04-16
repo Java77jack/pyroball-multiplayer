@@ -243,3 +243,13 @@
 - [x] Update Season page team cards to display team logos
 - [x] Update Season page team cards to display team stats in 2x2 grid
 - [x] Test Season page displays logos and stats correctly
+
+## Code Cleanup & Refactoring
+- [x] Audit codebase for unused imports and dead code
+- [x] Remove obsolete files (ComponentShowcase, DashboardLayout, DashboardLayoutSkeleton, ManusDialog)
+- [x] Remove spriteSheet URLs from gameConstants and TeamData interface
+- [x] Consolidate duplicate utility functions into shared utils.ts
+- [x] Update all files to import clamp/lerp/lerpColor from utils
+- [x] Remove unused ActionButtons import from GameScreen.tsx
+- [x] Verify all 116 tests pass after cleanup
+- [x] Ensure TypeScript compilation has no errors

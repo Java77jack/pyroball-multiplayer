@@ -8,6 +8,7 @@ import {
   type AnnouncerCallout,
 } from '@/lib/gameConstants';
 import type { Difficulty } from '@/contexts/GameContext';
+import { clamp, lerp } from '@/lib/utils';
 
 // Difficulty multipliers: [aiSpeed, aiShotAccuracy, shotMeterFillSpeed, greenZoneWidth]
 const DIFFICULTY_MODS: Record<Difficulty, { aiSpeed: number; aiShotAcc: number; fillSpeed: number; greenWidth: number }> = {
@@ -86,8 +87,7 @@ function normalize(v: Vec2): Vec2 {
   if (len === 0) return { x: 0, y: 0 };
   return { x: v.x / len, y: v.y / len };
 }
-function clamp(val: number, min: number, max: number) { return Math.max(min, Math.min(max, val)); }
-function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
+
 function dot(a: Vec2, b: Vec2) { return a.x * b.x + a.y * b.y; }
 
 // ========== FACTORY FUNCTIONS ==========

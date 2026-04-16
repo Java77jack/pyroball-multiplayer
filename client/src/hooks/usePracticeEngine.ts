@@ -20,6 +20,7 @@ import {
   playAnnouncerStinger, playBigImpact,
 } from '@/lib/soundEngine';
 import type { DrillDef } from '@/pages/Practice';
+import { clamp, lerp } from '@/lib/utils';
 
 // ========== DRILL PROGRESS STATE ==========
 export interface DrillProgress {
@@ -44,8 +45,7 @@ function normalize(v: Vec2): Vec2 {
   if (len === 0) return { x: 0, y: 0 };
   return { x: v.x / len, y: v.y / len };
 }
-function clamp(val: number, min: number, max: number) { return Math.max(min, Math.min(max, val)); }
-function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
+
 function dist(a: Vec2, b: Vec2) { return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2); }
 
 function makeCallout(

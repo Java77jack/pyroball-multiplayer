@@ -6,7 +6,6 @@ import { useGamepad } from '@/hooks/useGamepad';
 import GameCanvas from '@/components/GameCanvas';
 import GameHUD from '@/components/GameHUD';
 import Joystick from '@/components/Joystick';
-import ActionButtons from '@/components/ActionButtons';
 import { playMusic, markUserInteraction } from '@/lib/musicEngine';
 // Clean NBA 2K style — no page-level overlays
 

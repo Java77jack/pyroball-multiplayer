@@ -17,6 +17,7 @@ import {
   drawPlayerCharacter, getPlayerPose as getVectorPose,
   type PlayerPose,
 } from '@/lib/playerRenderer';
+import { lerpColor } from '@/lib/utils';
 
 // ============================================================
 // PERSPECTIVE 3D RENDERING ENGINE
@@ -128,15 +129,7 @@ function lighten(hex: string, amt: number): string {
   return `rgb(${Math.min(255, parseInt(r[1],16)+amt)},${Math.min(255, parseInt(r[2],16)+amt)},${Math.min(255, parseInt(r[3],16)+amt)})`;
 }
 
-function lerpColor(a: string, b: string, t: number): string {
-  const ra = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i;
-  const ma = ra.exec(a), mb = ra.exec(b);
-  if (!ma || !mb) return a;
-  const r = Math.round(parseInt(ma[1],16)*(1-t)+parseInt(mb[1],16)*t);
-  const g = Math.round(parseInt(ma[2],16)*(1-t)+parseInt(mb[2],16)*t);
-  const bl = Math.round(parseInt(ma[3],16)*(1-t)+parseInt(mb[3],16)*t);
-  return `rgb(${r},${g},${bl})`;
-}
+
 
 // ============================================================
 // PLAYER RENDERING — Now uses canvas-drawn vector characters

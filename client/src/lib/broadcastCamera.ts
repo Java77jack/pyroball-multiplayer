@@ -25,6 +25,7 @@
 
 import { COURT } from './gameConstants';
 import type { GameState, PlayerState } from './gameConstants';
+import { clamp, lerp } from './utils';
 
 // ---- Camera tuning constants ----
 export const BROADCAST_CAM = {
@@ -227,20 +228,6 @@ function getTargetZoom(mode: CameraMode): number {
     case 'shot': return BROADCAST_CAM.ZOOM_SHOT;
     default: return BROADCAST_CAM.ZOOM_DEFAULT;
   }
-}
-
-/**
- * Clamp a value between min and max.
- */
-export function clamp(val: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, val));
-}
-
-/**
- * Linear interpolation.
- */
-export function lerp(current: number, target: number, factor: number): number {
-  return current + (target - current) * factor;
 }
 
 /**
