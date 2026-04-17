@@ -41,6 +41,11 @@ function darken(hex: string, amount: number): string {
   return `rgb(${Math.round(r * f)}, ${Math.round(g * f)}, ${Math.round(b * f)})`;
 }
 
+function ensureHex(color: string): string {
+  if (color.startsWith('#')) return color;
+  return '#888888';
+}
+
 function lighten(hex: string, amount: number): string {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -48,13 +53,8 @@ function lighten(hex: string, amount: number): string {
   return `rgb(${Math.min(255, Math.round(r + (255 - r) * amount))}, ${Math.min(255, Math.round(g + (255 - g) * amount))}, ${Math.min(255, Math.round(b + (255 - b) * amount))})`;
 }
 
-function ensureHex(color: string): string {
-  if (color.startsWith('#')) return color;
-  return '#888888';
-}
-
 // ============================================================
-// DRAW PLAYER CHARACTER — PREMIUM DESIGN
+// DRAW PLAYER CHARACTER — REALISTIC DESIGN
 // ============================================================
 export function drawPlayerCharacter(
   ctx: CanvasRenderingContext2D,
