@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, userStats, playerStats, matches, roomPlayers } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,103 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// ========== STATS & LEADERBOARD QUERIES ==========
+
+export async function getUserStats(userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db
+    .select()
+    .from(userStats)
+    .where(eq(userStats.userId, userId))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getLeaderboard(limit: number = 50) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      wins: userStats.wins,
+      losses: userStats.losses,
+      totalGoals: userStats.totalGoals,
+      totalAssists: userStats.totalAssists,
+      matchesPlayed: userStats.matchesPlayed,
+    })
+    .from(userStats)
+    .innerJoin(users, eq(userStats.userId, users.id))
+    .orderBy(desc(userStats.wins))
+    .limit(limit);
+
+  return result;
+}
+
+export async function getPlayerMatchHistory(userId: number, limit: number = 20) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select({
+      matchId: matches.id,
+      homeTeamScore: matches.homeTeamScore,
+      awayTeamScore: matches.awayTeamScore,
+      winnerId: matches.winnerId,
+      duration: matches.duration,
+      createdAt: matches.createdAt,
+      goalsScored: playerStats.goalsScored,
+      assists: playerStats.assists,
+      steals: playerStats.steals,
+      blocks: playerStats.blocks,
+      shotAccuracy: playerStats.shotAccuracy,
+    })
+    .from(playerStats)
+    .innerJoin(matches, eq(playerStats.matchId, matches.id))
+    .where(eq(playerStats.playerId, userId))
+    .orderBy(desc(matches.createdAt))
+    .limit(limit);
+
+  return result;
+}
+
+export async function getMatchDetails(matchId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db
+    .select()
+    .from(matches)
+    .where(eq(matches.id, matchId))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getMatchPlayerStats(matchId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select({
+      playerId: playerStats.playerId,
+      playerName: users.name,
+      goalsScored: playerStats.goalsScored,
+      assists: playerStats.assists,
+      steals: playerStats.steals,
+      blocks: playerStats.blocks,
+      shotAccuracy: playerStats.shotAccuracy,
+    })
+    .from(playerStats)
+    .innerJoin(users, eq(playerStats.playerId, users.id))
+    .where(eq(playerStats.matchId, matchId))
+    .orderBy(desc(playerStats.goalsScored));
+
+  return result;
+}
+
+// TODO: add more feature queries here as your schema grows.

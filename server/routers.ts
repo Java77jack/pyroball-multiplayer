@@ -1,7 +1,9 @@
-import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { COOKIE_NAME } from "../shared/const";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { z } from "zod";
+import { getUserStats, getLeaderboard, getPlayerMatchHistory, getMatchDetails, getMatchPlayerStats } from "./db";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -17,12 +19,42 @@ export const appRouter = router({
     }),
   }),
 
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
+  stats: router({
+    // Get current user's stats
+    me: protectedProcedure.query(async ({ ctx }) => {
+      return await getUserStats(ctx.user.id);
+    }),
+
+    // Get any player's stats
+    getPlayer: publicProcedure
+      .input(z.object({ userId: z.number() }))
+      .query(async ({ input }) => {
+        return await getUserStats(input.userId);
+      }),
+
+    // Get global leaderboard
+    leaderboard: publicProcedure
+      .input(z.object({ limit: z.number().default(50) }))
+      .query(async ({ input }) => {
+        return await getLeaderboard(input.limit);
+      }),
+
+    // Get player's match history
+    matchHistory: publicProcedure
+      .input(z.object({ userId: z.number(), limit: z.number().default(20) }))
+      .query(async ({ input }) => {
+        return await getPlayerMatchHistory(input.userId, input.limit);
+      }),
+
+    // Get match details with all player stats
+    matchDetails: publicProcedure
+      .input(z.object({ matchId: z.number() }))
+      .query(async ({ input }) => {
+        const match = await getMatchDetails(input.matchId);
+        const playerStats = await getMatchPlayerStats(input.matchId);
+        return { match, playerStats };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

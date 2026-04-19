@@ -12,6 +12,7 @@ const MENU_ITEMS = [
   { label: 'IGNITION SEASON', route: '/season', primary: false },
   { label: 'PRACTICE', route: '/practice', primary: false },
   { label: 'TEAMS', route: '/team-select', primary: false },
+  { label: 'LEADERBOARD', route: '/leaderboard', primary: false },
   { label: 'HOW TO PLAY', route: '/how-to-play', primary: false },
 ];
 
