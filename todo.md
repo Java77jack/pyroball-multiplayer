@@ -48,9 +48,9 @@
 - [ ] Implement spectator join from room list
 - [ ] Create spectator UI (no controls, camera follows ball)
 - [ ] Implement player stats tracking during matches
-- [ ] Create player profile page with career stats
-- [ ] Create match history page with replays
-- [ ] Implement leaderboard system
+- [x] Create player profile page with career stats
+- [x] Create match history page with replays
+- [x] Implement leaderboard system
 - [ ] Add stats to database on match completion
 
 ## Phase 7: Real-Time Chat
@@ -78,7 +78,7 @@
 - [x] Fix player floating on screen - improved ground shadow and anchoring
 - [x] Adjust perspective projection to properly ground players on court
 - [x] Improve shadow rendering for better depth perception
-- [ ] Add proper collision detection with court boundaries
+- [x] Add proper collision detection with court boundaries
 
 ### Shooting Direction & AI
 - [x] Fix player shooting directions - now shooting at goal center
@@ -87,11 +87,11 @@
 - [ ] Test shooting accuracy from different court positions
 
 ### Player Animations & Polish
-- [ ] Enhance player running animations with better arm motion
-- [ ] Improve idle stance and posture
-- [ ] Add smooth transitions between animation states
-- [ ] Improve player sprite quality and detail
-- [ ] Add player rotation/facing based on movement direction
+- [x] Enhance player running animations with better arm motion
+- [x] Improve idle stance and posture
+- [x] Add smooth transitions between animation states
+- [x] Improve player sprite quality and detail
+- [x] Add player rotation/facing based on movement direction
 
 ### Testing & Validation
 - [x] Test player grounding in all court areas

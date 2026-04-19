@@ -99,39 +99,62 @@ export function drawPlayerCharacter(
   const pantsDark = darken(pantsColor, 0.45);
   const pantsLight = lighten(pantsColor, 0.15);
   
-  const helmetColor = ensureHex(team.secondary);
-  const helmetDark = darken(helmetColor, 0.55);
-  const helmetLight = lighten(helmetColor, 0.35);
+  const skinColor = '#D4A574';
+  const skinDark = '#B8956A';
   
-  const skinColor = '#E8B8A0';
-  const skinDark = '#D4A08C';
-  const skinLight = '#F0C8B0';
+  const helmetColor = ensureHex(team.primary);
+  const helmetDark = darken(helmetColor, 0.6);
+  const helmetLight = lighten(helmetColor, 0.4);
   
-  // Animation offsets based on pose and frame
+  // ============================================================
+  // ANIMATION OFFSETS — ENHANCED WITH DYNAMIC MOTION
+  // ============================================================
   let legRotL = 0, legRotR = 0, armRotL = 0, armRotR = 0, forearmRotL = 0, forearmRotR = 0;
   let bodyBob = 0, bodyTilt = 0, bodyLean = 0;
   
   if (pose === 'running') {
-    const cycle = (frame % 12) / 12;
+    // Enhanced running animation with more dynamic arm and leg motion
+    const cycle = (frame % 16) / 16; // Slower cycle for more natural feel
     const legSwing = Math.sin(cycle * Math.PI * 2);
     const armSwing = Math.sin((cycle + 0.5) * Math.PI * 2);
+    const legAmplitude = 55; // Increased for more dramatic leg motion
+    const armAmplitude = 70; // Increased for more arm swing
+    const forearmAmplitude = 45; // Increased for more forearm motion
     
-    legRotL = legSwing * 40;
-    legRotR = Math.sin((cycle + 0.5) * Math.PI * 2) * 40;
-    armRotL = armSwing * 45;
-    armRotR = Math.sin(cycle * Math.PI * 2) * 45;
-    forearmRotL = armSwing * 25;
-    forearmRotR = Math.sin(cycle * Math.PI * 2) * 25;
-    bodyBob = Math.abs(Math.sin(cycle * Math.PI)) * 2.5;
-    bodyTilt = Math.sin(cycle * Math.PI * 2) * 4;
-    bodyLean = Math.sin(cycle * Math.PI * 2) * 2;
+    // Legs: opposite phase for realistic running stride
+    legRotL = legSwing * legAmplitude;
+    legRotR = Math.sin((cycle + 0.5) * Math.PI * 2) * legAmplitude;
+    
+    // Arms: opposite to legs (when left leg forward, right arm forward)
+    armRotL = armSwing * armAmplitude;
+    armRotR = Math.sin(cycle * Math.PI * 2) * armAmplitude;
+    
+    // Forearms: follow arm motion with additional bend
+    forearmRotL = armSwing * forearmAmplitude;
+    forearmRotR = Math.sin(cycle * Math.PI * 2) * forearmAmplitude;
+    
+    // Body bobbing: natural up-down motion from running
+    bodyBob = Math.abs(Math.sin(cycle * Math.PI)) * 4;
+    
+    // Body tilt: lean forward slightly during run
+    bodyTilt = Math.sin(cycle * Math.PI * 2) * 6;
+    
+    // Body lean: side-to-side sway
+    bodyLean = Math.sin(cycle * Math.PI * 2) * 3;
   } else if (pose === 'jumping') {
-    armRotL = -50;
-    armRotR = -50;
-    forearmRotL = -40;
-    forearmRotR = -40;
-    bodyTilt = -8;
-    bodyBob = 1;
+    // Enhanced jumping pose with more dynamic arm positioning
+    const jumpFrame = (frame % 8) / 8;
+    const jumpPhase = Math.sin(jumpFrame * Math.PI);
+    
+    // Arms up during jump
+    armRotL = -70 + jumpPhase * 10;
+    armRotR = -70 + jumpPhase * 10;
+    forearmRotL = -50 + jumpPhase * 15;
+    forearmRotR = -50 + jumpPhase * 15;
+    
+    // Body positioning
+    bodyTilt = -12 + jumpPhase * 4;
+    bodyBob = jumpPhase * 2;
   } else if (pose === 'shooting') {
     const shootFrame = (frame % 10) / 10;
     const shootEase = shootFrame < 0.5 ? shootFrame * 2 : 2 - shootFrame * 2;
@@ -159,13 +182,11 @@ export function drawPlayerCharacter(
   }
   
   // ============================================================
-  // DRAW LEGS WITH THIGH & CALF SEPARATION
+  // DRAW LEGS
   // ============================================================
-  ctx.save();
-  ctx.translate(0, NECK_H + BODY_H);
-  
   // Left leg
   ctx.save();
+  ctx.translate(-BODY_W / 2 - 1 * s, BODY_H);
   ctx.rotate((legRotL * Math.PI) / 180);
   
   // Thigh
@@ -376,6 +397,9 @@ export function drawPlayerCharacter(
   // ============================================================
   // DRAW HEAD & HELMET
   // ============================================================
+  ctx.save();
+  ctx.translate(0, -BODY_H / 2 - NECK_H);
+  
   // Head base
   ctx.fillStyle = skinColor;
   ctx.beginPath();
