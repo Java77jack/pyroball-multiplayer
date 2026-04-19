@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
  * - Controller connection status
  * - Button press visualization
  * - Stick input display
+ * - Polling activity indicator
  * - Troubleshooting information
  */
 
@@ -16,6 +17,8 @@ interface GamepadDebugState {
   buttons: boolean[];
   axes: number[];
   timestamp: number;
+  pollCount: number;
+  lastPollTime: number;
 }
 
 export function GamepadDebugOverlay() {
@@ -25,6 +28,8 @@ export function GamepadDebugOverlay() {
     buttons: [],
     axes: [],
     timestamp: 0,
+    pollCount: 0,
+    lastPollTime: 0,
   });
 
   const rafRef = useRef<number>(0);
@@ -42,13 +47,15 @@ export function GamepadDebugOverlay() {
       }
 
       if (gp) {
-        setDebugState({
+        setDebugState(prev => ({
           isConnected: true,
           gamepadId: gp.id,
           buttons: Array.from(gp.buttons).map(b => b.pressed),
           axes: Array.from(gp.axes),
           timestamp: Date.now(),
-        });
+          pollCount: prev.pollCount + 1,
+          lastPollTime: Date.now(),
+        }));
       } else {
         setDebugState(prev => ({
           ...prev,
@@ -56,6 +63,8 @@ export function GamepadDebugOverlay() {
           gamepadId: null,
           buttons: [],
           axes: [],
+          pollCount: prev.pollCount + 1,
+          lastPollTime: Date.now(),
         }));
       }
 
@@ -89,6 +98,9 @@ export function GamepadDebugOverlay() {
     'D-Up (12)', 'D-Down (13)', 'D-Left (14)', 'D-Right (15)',
   ];
 
+  // Animate polling indicator
+  const pulseOpacity = ((debugState.pollCount % 10) / 10);
+
   return (
     <div className="fixed bottom-4 right-4 z-50 font-mono text-xs bg-black/90 border border-cyan-500/50 rounded p-3 max-w-sm text-cyan-400 space-y-2">
       {/* Title */}
@@ -104,6 +116,15 @@ export function GamepadDebugOverlay() {
         </span>
       </div>
 
+      {/* Polling Status - Always visible */}
+      <div className="flex items-center gap-2 text-cyan-500/70">
+        <div 
+          className="w-2 h-2 rounded-full bg-cyan-400"
+          style={{ opacity: 0.3 + pulseOpacity * 0.7 }}
+        />
+        <span>Polling: {debugState.pollCount} cycles</span>
+      </div>
+
       {/* Gamepad ID */}
       {debugState.gamepadId && (
         <div className="text-cyan-300 text-xs break-words">
@@ -113,6 +134,12 @@ export function GamepadDebugOverlay() {
 
       {debugState.isConnected ? (
         <>
+          {/* API Status */}
+          <div className="border-t border-cyan-500/20 pt-2 text-cyan-300 text-xs">
+            <div>✓ Gamepad API Active</div>
+            <div className="text-cyan-500/60">Buttons: {debugState.buttons.length} | Axes: {debugState.axes.length}</div>
+          </div>
+
           {/* Left Stick */}
           <div className="border-t border-cyan-500/20 pt-2">
             <div className="text-cyan-300 mb-1">Left Stick:</div>
@@ -171,11 +198,11 @@ export function GamepadDebugOverlay() {
             <strong>Troubleshooting:</strong>
           </div>
           <ul className="list-disc list-inside space-y-1 text-cyan-500/60">
-            <li>Connect your controller</li>
+            <li>Connect your Logitech F310</li>
             <li>Press any button on controller</li>
             <li>Try different USB port</li>
-            <li>Check browser console (F12)</li>
             <li>Refresh page after connecting</li>
+            <li>Check browser supports Gamepad API</li>
           </ul>
         </div>
       )}

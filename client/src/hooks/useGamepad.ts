@@ -69,11 +69,24 @@ export function useGamepad({ onMove, onAction, enabled, onConnected, onDisconnec
   const shootHoldStartRef = useRef<number>(0);
   const connectedRef = useRef(false);
   const lastGamepadIdRef = useRef<string | null>(null);
+  const primeAttemptedRef = useRef(false);
 
   const poll = useCallback(() => {
     if (!enabled) {
       rafRef.current = requestAnimationFrame(poll);
       return;
+    }
+
+    // Force prime gamepad API on first poll if not already done
+    // This is needed because navigator.getGamepads() needs user interaction to work
+    if (!primeAttemptedRef.current) {
+      primeAttemptedRef.current = true;
+      try {
+        const test = navigator.getGamepads?.();
+        console.log('[Pyroball] Gamepad API primed, found:', test?.length ?? 0, 'slots');
+      } catch (e) {
+        console.warn('[Pyroball] Gamepad API not available:', e);
+      }
     }
 
     const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
@@ -95,6 +108,7 @@ export function useGamepad({ onMove, onAction, enabled, onConnected, onDisconnec
     if (lastGamepadIdRef.current !== gp.id) {
       lastGamepadIdRef.current = gp.id;
       console.log(`[Pyroball] Gamepad connected: ${gp.id}`);
+      console.log(`[Pyroball] Gamepad buttons: ${gp.buttons.length}, axes: ${gp.axes.length}`);
       onConnected?.(gp.id);
     }
 
@@ -145,27 +159,29 @@ export function useGamepad({ onMove, onAction, enabled, onConnected, onDisconnec
     if (justPressed(0) && !shootHeldRef.current) {
       shootHeldRef.current = true;
       shootHoldStartRef.current = now;
+      console.log('[Pyroball] Shoot started');
       onAction('shootStart');
     }
     if (justReleased(0) && shootHeldRef.current) {
       shootHeldRef.current = false;
+      console.log('[Pyroball] Shoot released');
       onAction('shootRelease');
     }
 
     // Button 1 — B / Circle → Pass
-    if (justPressed(1)) onAction('pass');
+    if (justPressed(1)) { console.log('[Pyroball] Pass'); onAction('pass'); }
 
     // Button 2 — X / Square → Steal
-    if (justPressed(2)) onAction('steal');
+    if (justPressed(2)) { console.log('[Pyroball] Steal'); onAction('steal'); }
 
     // Button 3 — Y / Triangle → Jump
-    if (justPressed(3)) onAction('jump');
+    if (justPressed(3)) { console.log('[Pyroball] Jump'); onAction('jump'); }
 
     // Button 4 — LB / L1 → Spin
-    if (justPressed(4)) onAction('spin');
+    if (justPressed(4)) { console.log('[Pyroball] Spin'); onAction('spin'); }
 
     // Button 5 — RB / R1 → Switch player
-    if (justPressed(5)) onAction('switch');
+    if (justPressed(5)) { console.log('[Pyroball] Switch'); onAction('switch'); }
 
     // Store current button state for next frame
     prevButtonsRef.current = Array.from(gp.buttons).map(b => b.pressed);
@@ -175,8 +191,10 @@ export function useGamepad({ onMove, onAction, enabled, onConnected, onDisconnec
 
   useEffect(() => {
     const handleConnect = (e: GamepadEvent) => {
-      console.log(`[Pyroball] Gamepad connected: ${e.gamepad.id}`);
+      console.log(`[Pyroball] Gamepad connected event: ${e.gamepad.id}`);
+      console.log(`[Pyroball] Gamepad buttons: ${e.gamepad.buttons.length}, axes: ${e.gamepad.axes.length}`);
       lastGamepadIdRef.current = e.gamepad.id;
+      connectedRef.current = true;
       onConnected?.(e.gamepad.id);
     };
     const handleDisconnect = (e: GamepadEvent) => {
@@ -188,8 +206,24 @@ export function useGamepad({ onMove, onAction, enabled, onConnected, onDisconnec
       onDisconnected?.();
     };
 
+    // Force prime the gamepad API with a user gesture
+    const handleUserInteraction = () => {
+      if (!primeAttemptedRef.current) {
+        primeAttemptedRef.current = true;
+        try {
+          navigator.getGamepads?.();
+          console.log('[Pyroball] Gamepad API primed from user interaction');
+        } catch (e) {
+          console.warn('[Pyroball] Failed to prime gamepad API:', e);
+        }
+      }
+    };
+
     window.addEventListener('gamepadconnected', handleConnect);
     window.addEventListener('gamepaddisconnected', handleDisconnect);
+    window.addEventListener('click', handleUserInteraction, { once: true });
+    window.addEventListener('keydown', handleUserInteraction, { once: true });
+    window.addEventListener('touchstart', handleUserInteraction, { once: true });
 
     rafRef.current = requestAnimationFrame(poll);
 
@@ -197,6 +231,9 @@ export function useGamepad({ onMove, onAction, enabled, onConnected, onDisconnec
       cancelAnimationFrame(rafRef.current);
       window.removeEventListener('gamepadconnected', handleConnect);
       window.removeEventListener('gamepaddisconnected', handleDisconnect);
+      window.removeEventListener('click', handleUserInteraction);
+      window.removeEventListener('keydown', handleUserInteraction);
+      window.removeEventListener('touchstart', handleUserInteraction);
     };
   }, [poll, onMove, onConnected, onDisconnected]);
 
