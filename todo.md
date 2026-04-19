@@ -297,3 +297,26 @@
 - [x] Verified all animations work smoothly (idle, run, jump, shoot, pass, catch)
 - [x] Tested in-game and confirmed polished visuals
 - [x] All 116 tests passing
+
+
+## Combo Move System & Power Shots — IN PROGRESS
+- [x] Design combo system architecture with ComboTracker class
+- [x] Implement pass combo tracking (3+ consecutive passes = active)
+- [x] Implement steal combo tracking (2+ consecutive steals = active)
+- [x] Implement defensive combo tracking (3+ defensive plays = active)
+- [x] Create power shot mechanics with charge system
+- [x] Add visual effects for power shots (aura, release burst, radial lines)
+- [x] Implement alley-oop detection and bonus points
+- [x] Create combo indicators for HUD display
+- [x] Add combo multipliers for speed, accuracy, range, success rate
+- [ ] Integrate combo system into game engine
+- [ ] Test combo detection during gameplay
+- [ ] Add combo HUD indicators to GameCanvas
+- [ ] Balance combo multiplier values based on playtesting
+
+## Bug Fixes & Polish
+- [ ] Fix any remaining UI glitches
+- [ ] Optimize rendering performance
+- [ ] Improve error handling and edge cases
+- [ ] Add loading states for better UX
+- [ ] Test cross-browser compatibility

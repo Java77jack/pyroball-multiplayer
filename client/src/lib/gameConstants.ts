@@ -489,3 +489,41 @@ export const ASSET_URLS = {
   courtTexture: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663476839256/L959pTVNCfBxbsJyQ7g7yz/pyroball_court_texture-gK5TRuoWCeFughgBycJaaZ.webp',
   arenaHQ: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663489271487/bLh3StKHGXUj5K9umHEgwQ/pyroball_arena_v2-eKgNHPvNfDWDF6TdKjF75M.webp',
 } as const;
+
+// ========== COMBO MOVE SYSTEM ==========
+// Tracks consecutive successful actions to unlock special moves
+
+export const COMBO_SYSTEM = {
+  // Combo tiers and their requirements
+  PASS_COMBO_THRESHOLD: 3,      // 3 consecutive passes = combo active
+  PASS_COMBO_DURATION: 5.0,     // Seconds to maintain combo
+  PASS_COMBO_SPEED_BOOST: 1.2,  // 20% speed boost
+  PASS_COMBO_PASS_SPEED: 1.3,   // 30% faster passes
+  
+  // Power Shot: Charged shot with enhanced accuracy and power
+  POWER_SHOT_CHARGE_TIME: 1.5,  // Seconds to fully charge
+  POWER_SHOT_POWER_MULT: 1.8,   // 80% more power
+  POWER_SHOT_ACCURACY_MULT: 1.6, // 60% better accuracy
+  POWER_SHOT_POINTS_MULT: 1.5,  // 50% more points on goal
+  
+  // Steal Combo: Consecutive steals unlock steal boost
+  STEAL_COMBO_THRESHOLD: 2,     // 2 consecutive steals
+  STEAL_COMBO_DURATION: 4.0,    // Seconds to maintain
+  STEAL_COMBO_RANGE_MULT: 1.4,  // 40% larger steal range
+  STEAL_COMBO_SUCCESS_MULT: 1.5, // 50% higher steal success rate
+  
+  // Alley-Oop: Pass + immediate aerial shot = bonus points
+  ALLEY_OOP_WINDOW: 2.0,        // Seconds after receiving pass
+  ALLEY_OOP_POINTS_BONUS: 2,    // Extra points for alley-oop goal
+  ALLEY_OOP_SPEED_REQUIREMENT: 0.5, // Must be moving at least this fast
+  
+  // Defensive Combo: Consecutive defensive plays
+  DEFENSIVE_COMBO_THRESHOLD: 3, // 3 consecutive defensive plays
+  DEFENSIVE_COMBO_DURATION: 6.0,
+  DEFENSIVE_COMBO_STEAL_BOOST: 1.8, // 80% better steals
+  DEFENSIVE_COMBO_BLOCK_BOOST: 1.6, // 60% better blocks
+  
+  // Visual feedback
+  COMBO_GLOW_COLOR: '#FFD700',  // Gold glow for active combos
+  COMBO_PARTICLE_COUNT: 8,      // Particles per combo hit
+} as const;
