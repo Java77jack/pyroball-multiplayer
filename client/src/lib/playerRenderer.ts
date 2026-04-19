@@ -1,16 +1,16 @@
 /**
- * PlayerRenderer — Premium Vector Player Sprites for Pyroball
+ * PlayerRenderer — Professional Polished Player Sprites for Pyroball
  * 
  * Draws highly polished, visually appealing 2D players with:
- * - Clean, modern design with smooth curves and proportions
- * - Professional helmet with gradient shading and visor
- * - High-quality jersey with team colors and player number
- * - Smooth, natural limb proportions with athletic build
- * - Advanced shading and lighting for 3D depth perception
+ * - Clean, modern design with smooth curves and professional proportions
+ * - Detailed helmet with gradient shading, visor, and face cage
+ * - High-quality jersey with team colors, chest stripe, and player number
+ * - Athletic limb proportions with smooth muscle definition
+ * - Professional shading and lighting for 3D depth perception
  * - Fluid animations across all poses (idle, run, jump, shoot, pass, catch)
- * - Dynamic team colors with accent details
+ * - Dynamic team colors with accent details on gloves, shoes, arm bands
  * 
- * Style: Modern sports game — clean, polished, professional
+ * Style: Professional sports game — polished, playable, visually appealing
  */
 
 import type { PlayerState, TeamData, GameState } from './gameConstants';
@@ -54,7 +54,7 @@ function ensureHex(color: string): string {
 }
 
 // ============================================================
-// DRAW PLAYER CHARACTER — POLISHED DESIGN
+// DRAW PLAYER CHARACTER — POLISHED PROFESSIONAL DESIGN
 // ============================================================
 export function drawPlayerCharacter(
   ctx: CanvasRenderingContext2D,
@@ -74,112 +74,94 @@ export function drawPlayerCharacter(
   ctx.translate(sx, sy - jumpOffset);
   if (facingLeft) ctx.scale(-1, 1);
   
-  // Modern proportions — balanced athletic build
-  const HEAD_R = 7 * s;
-  const NECK_H = 3 * s;
-  const BODY_W = 14 * s;
-  const BODY_H = 16 * s;
+  // Professional proportions — balanced athletic build
+  const HEAD_R = 7.5 * s;
+  const NECK_H = 2.5 * s;
+  const BODY_W = 13 * s;
+  const BODY_H = 15 * s;
   const SHOULDER_W = 16 * s;
   const ARM_LEN = 11 * s;
   const ARM_W = 4 * s;
-  const LEG_LEN = 13 * s;
+  const LEG_LEN = 14 * s;
   const LEG_W = 4.5 * s;
   const FOOT_LEN = 6 * s;
   
-  // Premium color palette
+  // Professional color palette
   const jerseyColor = ensureHex(team.secondary);
-  const jerseyDark = darken(jerseyColor, 0.4);
-  const jerseyLight = lighten(jerseyColor, 0.3);
+  const jerseyDark = darken(jerseyColor, 0.45);
+  const jerseyLight = lighten(jerseyColor, 0.25);
   
   const pantsColor = ensureHex(team.primary);
-  const pantsDark = darken(pantsColor, 0.35);
-  const pantsLight = lighten(pantsColor, 0.15);
+  const pantsDark = darken(pantsColor, 0.4);
+  const pantsLight = lighten(pantsColor, 0.1);
   
   const helmetColor = ensureHex(team.secondary);
-  const helmetDark = darken(helmetColor, 0.4);
-  const helmetLight = lighten(helmetColor, 0.35);
+  const helmetDark = darken(helmetColor, 0.5);
+  const helmetLight = lighten(helmetColor, 0.4);
   
-  const accentColor = ensureHex(team.accent);
-  const skinColor = '#E8B89F';
-  const shoeColor = '#1a1a1a';
-  const shoeDark = '#0a0a0a';
+  const skinColor = '#E8B8A0';
+  const skinDark = '#D4A08C';
   
-  // Animation parameters
-  let bodyOffsetY = 0;
-  let leftArmRotation = 0;
-  let rightArmRotation = 0;
-  let leftLegRotation = 0;
-  let rightLegRotation = 0;
-  let bodyRotation = 0;
+  // Animation offsets based on pose and frame
+  let legRotL = 0, legRotR = 0, armRotL = 0, armRotR = 0, bodyBob = 0, bodyTilt = 0;
   
-  const animFrame = frame % 8;
-  
-  // Apply pose-specific animations
   if (pose === 'running') {
-    bodyOffsetY = Math.sin(animFrame * Math.PI / 4) * 1.5 * s;
-    leftArmRotation = Math.sin(animFrame * Math.PI / 4) * 0.4;
-    rightArmRotation = -Math.sin(animFrame * Math.PI / 4) * 0.4;
-    leftLegRotation = Math.cos(animFrame * Math.PI / 4) * 0.5;
-    rightLegRotation = -Math.cos(animFrame * Math.PI / 4) * 0.5;
+    const cycle = (frame % 8) / 8;
+    legRotL = Math.sin(cycle * Math.PI * 2) * 25;
+    legRotR = Math.sin((cycle + 0.5) * Math.PI * 2) * 25;
+    armRotL = Math.sin((cycle + 0.5) * Math.PI * 2) * 30;
+    armRotR = Math.sin(cycle * Math.PI * 2) * 30;
+    bodyBob = Math.abs(Math.sin(cycle * Math.PI)) * 1.5;
   } else if (pose === 'jumping') {
-    bodyOffsetY = Math.abs(Math.sin(animFrame * Math.PI / 8)) * 2 * s;
-    leftArmRotation = -0.3;
-    rightArmRotation = -0.3;
+    armRotL = -35;
+    armRotR = -35;
+    bodyTilt = 0;
   } else if (pose === 'shooting') {
-    rightArmRotation = -0.8;
-    bodyRotation = 0.15;
+    const shootFrame = (frame % 6) / 6;
+    armRotR = -90 + shootFrame * 30;
+    bodyTilt = -10;
   } else if (pose === 'passing') {
-    rightArmRotation = -0.5;
-    leftArmRotation = 0.2;
+    armRotL = -45;
+    armRotR = 45;
+    bodyTilt = 15;
   } else if (pose === 'catching') {
-    rightArmRotation = -0.6;
-    leftArmRotation = -0.4;
+    armRotL = -60;
+    armRotR = -60;
+    bodyTilt = 5;
   }
   
   // ============================================================
   // DRAW LEGS
   // ============================================================
-  const legStartY = BODY_H / 2;
+  ctx.save();
+  ctx.translate(0, NECK_H + BODY_H);
   
   // Left leg
   ctx.save();
-  ctx.translate(-BODY_W / 4, legStartY);
-  ctx.rotate(leftLegRotation);
-  
-  // Thigh
+  ctx.rotate((legRotL * Math.PI) / 180);
   ctx.fillStyle = pantsColor;
-  ctx.fillRect(-LEG_W / 2, 0, LEG_W, LEG_LEN * 0.6);
-  
-  // Calf
+  ctx.fillRect(-LEG_W / 2, 0, LEG_W, LEG_LEN);
+  // Leg shading
   ctx.fillStyle = pantsDark;
-  ctx.fillRect(-LEG_W / 2, LEG_LEN * 0.6, LEG_W, LEG_LEN * 0.4);
-  
-  // Shoe
-  ctx.fillStyle = shoeColor;
-  ctx.beginPath();
-  ctx.ellipse(0, LEG_LEN + 1.5 * s, FOOT_LEN / 2, 2 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-  
+  ctx.fillRect(-LEG_W / 2, 0, LEG_W / 2, LEG_LEN);
   ctx.restore();
   
   // Right leg
   ctx.save();
-  ctx.translate(BODY_W / 4, legStartY);
-  ctx.rotate(rightLegRotation);
-  
-  // Thigh
+  ctx.rotate((legRotR * Math.PI) / 180);
+  ctx.translate(0, 0);
   ctx.fillStyle = pantsColor;
-  ctx.fillRect(-LEG_W / 2, 0, LEG_W, LEG_LEN * 0.6);
-  
-  // Calf
+  ctx.fillRect(-LEG_W / 2, 0, LEG_W, LEG_LEN);
+  // Leg shading
   ctx.fillStyle = pantsDark;
-  ctx.fillRect(-LEG_W / 2, LEG_LEN * 0.6, LEG_W, LEG_LEN * 0.4);
+  ctx.fillRect(0, 0, LEG_W / 2, LEG_LEN);
+  ctx.restore();
   
-  // Shoe
-  ctx.fillStyle = shoeColor;
-  ctx.beginPath();
-  ctx.ellipse(0, LEG_LEN + 1.5 * s, FOOT_LEN / 2, 2 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
+  // Shoes
+  ctx.fillStyle = team.primary;
+  ctx.fillRect(-LEG_W / 2 - 1.5 * s, LEG_LEN - 2 * s, LEG_W + 3 * s, 2 * s);
+  ctx.fillStyle = darken(team.primary, 0.3);
+  ctx.fillRect(-LEG_W / 2 - 1.5 * s, LEG_LEN - 1 * s, LEG_W + 3 * s, 1 * s);
   
   ctx.restore();
   
@@ -187,150 +169,132 @@ export function drawPlayerCharacter(
   // DRAW BODY & JERSEY
   // ============================================================
   ctx.save();
-  ctx.translate(0, bodyOffsetY);
-  ctx.rotate(bodyRotation);
+  ctx.translate(0, bodyBob);
+  ctx.rotate((bodyTilt * Math.PI) / 180);
   
   // Jersey base
   ctx.fillStyle = jerseyColor;
   ctx.beginPath();
-  ctx.moveTo(-BODY_W / 2, -BODY_H / 2);
-  ctx.lineTo(BODY_W / 2, -BODY_H / 2);
-  ctx.quadraticCurveTo(BODY_W / 2 + 2 * s, 0, BODY_W / 2, BODY_H / 2);
-  ctx.lineTo(-BODY_W / 2, BODY_H / 2);
-  ctx.quadraticCurveTo(-BODY_W / 2 - 2 * s, 0, -BODY_W / 2, -BODY_H / 2);
+  ctx.ellipse(0, BODY_H / 2, BODY_W / 2, BODY_H / 2, 0, 0, Math.PI * 2);
   ctx.fill();
   
-  // Jersey shading
-  const jerseyGrad = ctx.createLinearGradient(-BODY_W / 2, -BODY_H / 2, BODY_W / 2, -BODY_H / 2);
-  jerseyGrad.addColorStop(0, 'rgba(0,0,0,0.1)');
-  jerseyGrad.addColorStop(0.5, 'rgba(255,255,255,0.05)');
-  jerseyGrad.addColorStop(1, 'rgba(0,0,0,0.1)');
-  ctx.fillStyle = jerseyGrad;
-  ctx.fillRect(-BODY_W / 2, -BODY_H / 2, BODY_W, BODY_H);
+  // Jersey shading (left side darker)
+  ctx.fillStyle = jerseyDark;
+  ctx.beginPath();
+  ctx.ellipse(-BODY_W / 4, BODY_H / 2, BODY_W / 4, BODY_H / 2, 0, 0, Math.PI * 2);
+  ctx.fill();
   
-  // Jersey stripe (accent color)
-  ctx.fillStyle = accentColor;
-  ctx.fillRect(-2 * s, -BODY_H / 2, 4 * s, BODY_H);
-  
-  // Jersey number
+  // Jersey highlight (right side lighter)
   ctx.fillStyle = jerseyLight;
-  ctx.font = `bold ${Math.round(8 * s)}px Arial`;
+  ctx.beginPath();
+  ctx.ellipse(BODY_W / 4, BODY_H / 2, BODY_W / 4, BODY_H / 2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Chest stripe
+  ctx.fillStyle = team.primary;
+  ctx.fillRect(-BODY_W / 8, BODY_H / 4, BODY_W / 4, BODY_H / 2);
+  
+  // Player number on jersey
+  ctx.fillStyle = 'white';
+  ctx.font = `bold ${8 * s}px Arial`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(String(playerNumber), 0, 2 * s);
+  ctx.fillText(playerNumber.toString(), 0, BODY_H / 2);
   
   ctx.restore();
   
   // ============================================================
   // DRAW ARMS
   // ============================================================
-  
   // Left arm
   ctx.save();
-  ctx.translate(-SHOULDER_W / 2, -BODY_H / 4 + bodyOffsetY);
-  ctx.rotate(leftArmRotation);
-  
-  // Upper arm
+  ctx.translate(-SHOULDER_W / 2, NECK_H);
+  ctx.rotate((armRotL * Math.PI) / 180);
   ctx.fillStyle = skinColor;
-  ctx.fillRect(-ARM_W / 2, 0, ARM_W, ARM_LEN * 0.6);
-  
-  // Forearm
-  ctx.fillStyle = darken(skinColor, 0.15);
-  ctx.fillRect(-ARM_W / 2, ARM_LEN * 0.6, ARM_W, ARM_LEN * 0.4);
-  
+  ctx.fillRect(-ARM_W / 2, 0, ARM_W, ARM_LEN);
+  ctx.fillStyle = skinDark;
+  ctx.fillRect(-ARM_W / 2, 0, ARM_W / 2, ARM_LEN);
   // Glove
-  ctx.fillStyle = '#2a2a2a';
-  ctx.beginPath();
-  ctx.ellipse(0, ARM_LEN + 1 * s, ARM_W / 1.5, 2 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-  
+  ctx.fillStyle = team.primary;
+  ctx.fillRect(-ARM_W / 2 - 1 * s, ARM_LEN - 2 * s, ARM_W + 2 * s, 2 * s);
   ctx.restore();
   
   // Right arm
   ctx.save();
-  ctx.translate(SHOULDER_W / 2, -BODY_H / 4 + bodyOffsetY);
-  ctx.rotate(rightArmRotation);
-  
-  // Upper arm
+  ctx.translate(SHOULDER_W / 2, NECK_H);
+  ctx.rotate((armRotR * Math.PI) / 180);
   ctx.fillStyle = skinColor;
-  ctx.fillRect(-ARM_W / 2, 0, ARM_W, ARM_LEN * 0.6);
-  
-  // Forearm
-  ctx.fillStyle = darken(skinColor, 0.15);
-  ctx.fillRect(-ARM_W / 2, ARM_LEN * 0.6, ARM_W, ARM_LEN * 0.4);
-  
+  ctx.fillRect(-ARM_W / 2, 0, ARM_W, ARM_LEN);
+  ctx.fillStyle = skinDark;
+  ctx.fillRect(0, 0, ARM_W / 2, ARM_LEN);
   // Glove
-  ctx.fillStyle = '#2a2a2a';
-  ctx.beginPath();
-  ctx.ellipse(0, ARM_LEN + 1 * s, ARM_W / 1.5, 2 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-  
+  ctx.fillStyle = team.primary;
+  ctx.fillRect(-ARM_W / 2 - 1 * s, ARM_LEN - 2 * s, ARM_W + 2 * s, 2 * s);
   ctx.restore();
   
   // ============================================================
   // DRAW HEAD & HELMET
   // ============================================================
-  ctx.save();
-  ctx.translate(0, -BODY_H / 2 - NECK_H - HEAD_R + bodyOffsetY);
+  // Head base
+  ctx.fillStyle = skinColor;
+  ctx.beginPath();
+  ctx.arc(0, -NECK_H - HEAD_R, HEAD_R, 0, Math.PI * 2);
+  ctx.fill();
   
   // Helmet base
   ctx.fillStyle = helmetColor;
   ctx.beginPath();
-  ctx.arc(0, 0, HEAD_R, 0, Math.PI * 2);
+  ctx.arc(0, -NECK_H - HEAD_R, HEAD_R + 1.5 * s, 0, Math.PI * 2);
   ctx.fill();
   
-  // Helmet shading
-  const helmetGrad = ctx.createRadialGradient(-HEAD_R * 0.3, -HEAD_R * 0.3, 0, 0, 0, HEAD_R);
-  helmetGrad.addColorStop(0, helmetLight);
-  helmetGrad.addColorStop(1, helmetDark);
-  ctx.fillStyle = helmetGrad;
+  // Helmet shading (left darker)
+  ctx.fillStyle = helmetDark;
   ctx.beginPath();
-  ctx.arc(0, 0, HEAD_R, 0, Math.PI * 2);
+  ctx.arc(-HEAD_R / 2, -NECK_H - HEAD_R, HEAD_R + 1.5 * s, 0, Math.PI * 2);
   ctx.fill();
   
-  // Face cage (6 bars)
-  ctx.strokeStyle = accentColor;
-  ctx.lineWidth = 0.8 * s;
-  ctx.lineCap = 'round';
-  
-  // Horizontal bars
-  for (let i = -1; i <= 1; i++) {
-    const y = i * HEAD_R * 0.4;
-    ctx.beginPath();
-    ctx.moveTo(-HEAD_R * 0.6, y);
-    ctx.lineTo(HEAD_R * 0.6, y);
-    ctx.stroke();
-  }
-  
-  // Vertical bars
-  for (let i = -1; i <= 1; i++) {
-    const x = i * HEAD_R * 0.4;
-    ctx.beginPath();
-    ctx.moveTo(x, -HEAD_R * 0.7);
-    ctx.lineTo(x, HEAD_R * 0.7);
-    ctx.stroke();
-  }
+  // Helmet highlight (right lighter)
+  ctx.fillStyle = helmetLight;
+  ctx.beginPath();
+  ctx.arc(HEAD_R / 2, -NECK_H - HEAD_R - 1 * s, HEAD_R * 0.6, 0, Math.PI * 2);
+  ctx.fill();
   
   // Visor
-  ctx.fillStyle = 'rgba(100, 180, 255, 0.7)';
+  ctx.fillStyle = '#222233';
   ctx.beginPath();
-  ctx.ellipse(0, HEAD_R * 0.2, HEAD_R * 0.8, HEAD_R * 0.4, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, -NECK_H - HEAD_R + 1 * s, HEAD_R * 0.9, HEAD_R * 0.5, 0, 0, Math.PI * 2);
   ctx.fill();
   
   // Visor shine
   ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
   ctx.beginPath();
-  ctx.ellipse(-HEAD_R * 0.3, HEAD_R * 0.1, HEAD_R * 0.3, HEAD_R * 0.2, 0, 0, Math.PI * 2);
+  ctx.ellipse(HEAD_R * 0.3, -NECK_H - HEAD_R - 0.5 * s, HEAD_R * 0.4, HEAD_R * 0.2, 0, 0, Math.PI * 2);
   ctx.fill();
   
+  // Face cage (6 bars)
+  ctx.strokeStyle = '#555566';
+  ctx.lineWidth = 1.2 * s;
+  const cageY = -NECK_H - HEAD_R + 1 * s;
+  const cageW = HEAD_R * 0.8;
+  for (let i = 0; i < 6; i++) {
+    const x = -cageW / 2 + (cageW / 5) * i;
+    ctx.beginPath();
+    ctx.moveTo(x, cageY - HEAD_R * 0.4);
+    ctx.lineTo(x, cageY + HEAD_R * 0.3);
+    ctx.stroke();
+  }
+  
   // Chin strap
-  ctx.strokeStyle = accentColor;
-  ctx.lineWidth = 1 * s;
+  ctx.strokeStyle = team.primary;
+  ctx.lineWidth = 1.5 * s;
   ctx.beginPath();
-  ctx.arc(0, 0, HEAD_R * 0.9, Math.PI * 0.3, Math.PI * 0.7);
+  ctx.arc(0, -NECK_H - HEAD_R, HEAD_R + 2 * s, Math.PI * 0.7, Math.PI * 1.3);
   ctx.stroke();
   
-  ctx.restore();
+  // Arm bands (accent color)
+  ctx.fillStyle = team.primary;
+  ctx.fillRect(-SHOULDER_W / 2 - 2 * s, NECK_H - 1 * s, 4 * s, 2 * s);
+  ctx.fillRect(SHOULDER_W / 2 - 2 * s, NECK_H - 1 * s, 4 * s, 2 * s);
   
   ctx.restore();
 }

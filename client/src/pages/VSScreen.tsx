@@ -291,7 +291,7 @@ export default function VSScreen() {
         }
         transition={
           phase === 'clash'
-            ? { type: 'spring', stiffness: 400, damping: 15 }
+            ? { type: 'tween', duration: 0.5, ease: 'easeOut' }
             : { duration: 0.3 }
         }
       >
