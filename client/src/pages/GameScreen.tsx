@@ -6,6 +6,7 @@ import { useGamepad } from '@/hooks/useGamepad';
 import GameCanvas from '@/components/GameCanvas';
 import GameHUD from '@/components/GameHUD';
 import Joystick from '@/components/Joystick';
+import { GamepadDebugOverlay } from '@/components/GamepadDebugOverlay';
 import { playMusic, markUserInteraction } from '@/lib/musicEngine';
 // Clean NBA 2K style — no page-level overlays
 
@@ -190,6 +191,9 @@ export default function GameScreen() {
       <div className="relative z-10 flex-1 flex items-center justify-center">
         <GameCanvas gameState={gameState} />
       </div>
+
+      {/* Gamepad Debug Overlay */}
+      <GamepadDebugOverlay />
 
       {/* Controls hidden - keyboard/gamepad only */}
     </div>
