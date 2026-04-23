@@ -17,6 +17,7 @@ import {
   drawPlayerCharacter, getPlayerPose as getVectorPose,
   type PlayerPose,
 } from '@/lib/playerRenderer';
+import { SpriteAnimator, buildSpriteFrameSet } from '@/lib/spriteAnimator';
 import { lerpColor } from '@/lib/utils';
 
 // ============================================================
@@ -305,22 +306,39 @@ function drawPlayer(ctx: CanvasRenderingContext2D, p: PlayerState, team: TeamDat
   ctx.fill();
   ctx.restore();
 
-  // ---- VECTOR CHARACTER RENDERING ----
-  const pose = getVectorPose(p, gs);
-
-  // Determine facing direction
-  let facingLeft = false;
-  if (isMoving) {
-    facingLeft = p.vel.x < -0.1;
-  } else {
-    facingLeft = p.id >= 3; // Away team faces left by default
+  // ---- SPRITE CHARACTER RENDERING ----
+  // Determine animation state based on player activity
+  let animState: 'idle' | 'run' | 'jump' | 'shoot' | 'pass' | 'catch' = 'idle';
+  
+  if (isAirborne) {
+    animState = 'jump';
+  } else if (isMoving) {
+    animState = 'run';
   }
 
-  // Draw the vector character
-  drawPlayerCharacter(
-    ctx, sx, sy, s, pose, frame, p.id,
-    team, facingLeft, jumpOffset, p.number
-  );
+  // Get or create sprite animator for this team
+  const spriteKey = `sprite-${team.name}`;
+  let animator = (window as any)[spriteKey] as SpriteAnimator;
+  if (!animator) {
+    animator = new SpriteAnimator(buildSpriteFrameSet(team.name.toLowerCase()));
+    (window as any)[spriteKey] = animator;
+  }
+
+  // Update animation
+  animator.setState(animState);
+  animator.update(1 / 60); // 60fps
+
+  // Draw sprite
+  ctx.save();
+  if (p.vel.x < -0.1) {
+    // Flip sprite horizontally for left-facing
+    ctx.translate(sx, sy - jumpOffset);
+    ctx.scale(-1, 1);
+    animator.draw(ctx, 0, 0, visR * 2.5, visR * 2.5);
+  } else {
+    animator.draw(ctx, sx, sy - jumpOffset, visR * 2.5, visR * 2.5);
+  }
+  ctx.restore();
 
   // ---- Adjusted Y for indicators ----
   const adjustedSy = sy - jumpOffset;
